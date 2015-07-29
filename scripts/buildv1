@@ -7,6 +7,9 @@ done
 if test -f ${MPAF}/analysis/bin/analysis
 then
     now="$(date +'%Y-%m-%d-%H-%M-%S')"
+    git add ${MPAF}
+    cmd=$(printf 'git commit -m "%s_compiled"' $now)
+    eval $cmd
     cmd=$(printf 'git tag %s_compiled' $now)
     eval $cmd
 fi

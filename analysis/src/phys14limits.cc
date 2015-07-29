@@ -131,24 +131,25 @@ void phys14limits::initialize(){
   _vc->registerVar("nSoftBJetMedium25"            );
 
   //additional counter categories
-  _au->addCategory( kElId        , "el Id"        );
-  _au->addCategory( kTVElId      , "tight veto El");
-  _au->addCategory( kVElId       , "veto El"      );
-  _au->addCategory( kMuId        , "muon Id"      );
-  _au->addCategory( kTVMuId      , "tight veto Mu");
-  _au->addCategory( kVMuId       , "veto Mu"      );
-  _au->addCategory( kJetId       , "jet Id"       );
-  _au->addCategory( kBJetId      , "b-jet Id"     );
-  _au->addCategory( kLMGVetoLepSel, "vetoLMGLepSel" );
-  _au->addCategory( kZVetoLepSel, "vetoZLepSel" );
+  _au->addCategory( kElId         , "el Id"           );
+  _au->addCategory( kSBElId       , "sideband el Id"  );
+  _au->addCategory( kTVElId       , "tight veto El"   );
+  _au->addCategory( kVElId        , "veto El"         );
+  _au->addCategory( kMuId         , "muon Id"         );
+  _au->addCategory( kMuId         , "sideband muon Id");
+  _au->addCategory( kTVMuId       , "tight veto Mu"   );
+  _au->addCategory( kVMuId        , "veto Mu"         );
+  _au->addCategory( kJetId        , "jet Id"          );
+  _au->addCategory( kBJetId       , "b-jet Id"        );
+  _au->addCategory( kLMGVetoLepSel, "vetoLMGLepSel"   );
+  _au->addCategory( kZVetoLepSel  , "vetoZLepSel"     );
 
   //extra input variables
   _lepflav = getCfgVarS("LEPFLAV");
-  //_mva     = getCfgVarS("LEPID"  );
-  //_btag    = getCfgVarS("BTAG"   );
   _PT      = getCfgVarS("PT"     );
-  //_BR      = getCfgVarS("BR"     );
   _SR      = getCfgVarS("SR"     );
+  _usesb   = getCfgVarS("USESB"  );
+  _fakes   = getCfgVarS("FAKES"  );
   
 }
 
@@ -215,48 +216,20 @@ void phys14limits::run(){
   //fillSkimTree();
   //return;
 	
-  //splitting the samples into categories
-  //if( _sampleName.find("DYJets")!=(size_t)-1 || _sampleName.find("TTJets")!=(size_t)-1 ) {
-  //  //_sampleName.find("WJets")!=(size_t)-1 ) {
-  //  
-  //  //ugly
-  //  int lep1Id=0;
-  //  int lep2Id=0;
-  //  lep1Id = genMatchCateg( _first );
-  //  lep2Id = genMatchCateg( _second) ;
-  //  //if(_nEls==2) {
-  //  //  lep1Id = genMatchCateg( _els[0] );
-  //  //  lep2Id = genMatchCateg( _els[1] );
-  //  //}
-  //  //if(_nEls==1) {
-  //  //  lep1Id = genMatchCateg( _els[0] );
-  //  //  lep2Id = genMatchCateg( _mus[0] );
-  //  //}
-  //  //if(_nEls==0) {
-  //  //  lep1Id = genMatchCateg( _mus[0] );
-  //  //  lep2Id = genMatchCateg( _mus[1] );
-  //  //}
-
-
-  //  if(_sampleName.find("misId")!=(size_t)-1) {
-  //    if( ! ( (lep1Id == kMisChargePdgId && lep2Id >= kMisChargePdgId) || 
-  //        (lep2Id == kMisChargePdgId && lep1Id >= kMisChargePdgId) ) ) return;
-  //  }
-  //  if(_sampleName.find("fake")!=(size_t)-1) {
-  //    if( lep1Id > kMisMatchPdgId &&
-  //    lep2Id > kMisMatchPdgId ) return;
-  //  }
-  //  if(_sampleName.find("prompt")!=(size_t)-1) {
-  //    if( lep1Id != kGenMatched ||
-  //    lep2Id != kGenMatched ) return;
-  //  }
-  //}
-  //counter("genCateg selection");
-  
-	
   // sr event selection
   if(!srSelection()) return;
-		
+
+  //// gen matching
+  //if(!genSelection()) return;
+  //  
+  ////fillSkimTree();
+  ////return;
+  //// calling the modules
+  //fillEventPlots("SR");
+  //fillJetPlots("SR");
+  //fillLeptonPlots("SR");
+
+	
 }
 
 
@@ -328,6 +301,8 @@ void phys14limits::defineOutput(){
   _hm->addVariable("SR_MuPt"      , 1000,   0.0, 1000.0, "P_T(#mu) [GeV]"       );
   _hm->addVariable("SR_JetCSVBTag",   50,   0.0,    1.0, "jet CSV B-Tag"        );
   _hm->addVariable("SR_JetPt"     , 1000,   0.0, 1000.0, "P_T(jet) [GeV]"       );
+  _hm->addVariable("SR_LElSIP"    , 1000,   0.0,   10.0, "SIP(e)"               );
+  _hm->addVariable("SR_LMuSIP"    , 1000,   0.0,   10.0, "SIP(#mu)"             );
 
 
   //fake background
@@ -399,6 +374,17 @@ void phys14limits::collectKinematicObjects(){
         _leps.push_back( _els[ _els.size()-1 ] );
         _lepIdx.push_back(i);
       }
+      if(sidebandElectronSelection(i)) {
+        _sbEls.push_back( Candidate::create(_vc->get("LepGood_pt", i),
+					  _vc->get("LepGood_eta", i),
+					  _vc->get("LepGood_phi", i),
+					  _vc->get("LepGood_pdgId", i),
+					  _vc->get("LepGood_charge", i),
+					  0.0005) );
+        _sbElIdx.push_back(i);
+        _sbLeps.push_back( _sbEls[ _sbEls.size()-1 ] );
+        _sbLepIdx.push_back(i);
+      }
       if(tightVetoElectronSelection(i)) {
         _tVEls.push_back( Candidate::create(_vc->get("LepGood_pt", i),
                       _vc->get("LepGood_eta", i),
@@ -438,6 +424,17 @@ void phys14limits::collectKinematicObjects(){
         _leps.push_back( _mus[ _mus.size()-1 ] );
         _lepIdx.push_back(i);
       }
+      if(sidebandMuonSelection(i)) {
+        _sbMus.push_back( Candidate::create(_vc->get("LepGood_pt", i),
+					  _vc->get("LepGood_eta", i),
+					  _vc->get("LepGood_phi", i),
+					  _vc->get("LepGood_pdgId", i),
+					  _vc->get("LepGood_charge", i),
+					  0.105) );
+        _sbMuIdx.push_back(i);
+        _sbLeps.push_back( _sbMus[ _sbMus.size()-1 ] );
+        _sbLepIdx.push_back(i);
+      }
       if(tightVetoMuonSelection(i)) {
         _tVMus.push_back( Candidate::create(_vc->get("LepGood_pt", i),
                       _vc->get("LepGood_eta", i),
@@ -468,6 +465,9 @@ void phys14limits::collectKinematicObjects(){
   _nEls    = _els   .size();
   _nLeps   = _leps  .size();
   _nMus    = _mus   .size();
+  _nSBEls  = _sbEls .size();
+  _nSBLeps = _sbLeps.size();
+  _nSBMus  = _sbMus .size();
   _nTVEls  = _tVEls .size();
   _nTVLeps = _tVLeps.size();
   _nTVMus  = _tVMus .size();
@@ -480,7 +480,6 @@ void phys14limits::collectKinematicObjects(){
       _jets.push_back( Candidate::create(_vc->get("Jet_pt", i),
 					 _vc->get("Jet_eta", i),
 					 _vc->get("Jet_phi", i) ) );
-      
     }
   }
 
@@ -546,7 +545,12 @@ bool phys14limits::electronSelection(int elIdx){
   
   bool conv= (_vc->get("LepGood_convVeto", elIdx) > 0 && _vc->get("LepGood_lostHits", elIdx)==0);
   if(!makeCut( conv, "conversion rejection", "=", kElId)) return false;
-  
+
+  //CH: nasty but simple: use (1) for SR, use (2+3) for SB  
+  //if(!makeCut<float>( _vc->get("LepGood_relIso03", elIdx)          , 0.1   , "<"  , "Isolation "        , 0    , kElId)) return false;
+  if(_vc->get("LepGood_mcMatchId", elIdx) == 0 && !makeCut<float>( _vc->get("LepGood_relIso03", elIdx), 0.1, "[]", "Isolation ", 0.5, kElId)) return false;
+  else if(_vc->get("LepGood_mcMatchId", elIdx) != 0 && !makeCut<float>( _vc->get("LepGood_relIso03", elIdx), 0.1, "<", "Isolation ", 0, kElId)) return false;
+
   return true;
 
 }
@@ -569,6 +573,63 @@ bool phys14limits::muonSelection(int muIdx){
   if(!makeCut<float>(std::abs(_vc->get("LepGood_dz", muIdx)) , 0.1, "<", "dz selection"  , 0, kMuId)) return false;
   //if(!makeCut<int>( _vc->get("LepGood_tightId"   , muIdx)    , 0  , ">", "POG CB WP-T Id", 0, kMuId)) return false;
   if(!makeCut<int>( _vc->get("LepGood_tightId"   , muIdx)    , 1  , ">=", "POG CB WP-T Id", 0, kMuId)) return false;
+  
+  //CH: nasty but simple: use (1) for SR, use (2+3) for SB  
+  //if(!makeCut<float>( _vc->get("LepGood_relIso03", muIdx)          , 0.1   , "<"  , "Isolation "        , 0    , kMuId)) return false;
+  if(_vc->get("LepGood_mcMatchId", muIdx) == 0 && !makeCut<float>( _vc->get("LepGood_relIso03", muIdx), 0.1, "[]", "Isolation ", 0.5, kMuId)) return false;
+  else if(_vc->get("LepGood_mcMatchId", muIdx) != 0 && !makeCut<float>( _vc->get("LepGood_relIso03", muIdx), 0.1, "<", "Isolation ", 0, kMuId)) return false;
+  return true;
+
+}
+
+
+//____________________________________________________________________________
+bool phys14limits::sidebandElectronSelection(int elIdx){
+  /*
+    does the selection of electrons in the sideband
+    parameters: elIdx
+    return: true (if the electron is an electron), false (else)
+  */
+
+
+  counter("SidebandElectronDenominator", kSBElId);
+  
+  if(_fakes != "none" && !makeCut<int>(  _vc->get("LepGood_mcMatchId", elIdx) , 0, "=", "gen fake selection", 0, kSBElId)) return false;
+
+  if(!makeCut<float>( _vc->get("LepGood_pt"      , elIdx)          , 10.   , ">"  , "pt selection"      , 0    , kSBElId)) return false;
+  if(!makeCut<float>( std::abs(_vc->get("LepGood_eta", elIdx))     , 2.4   , "<"  , "eta selection"     , 0    , kSBElId)) return false;
+  if(!makeCut<float>( std::abs(_vc->get("LepGood_eta", elIdx))     , 1.4442, "[!]", "eta selection veto", 1.566, kSBElId)) return false;
+  if(!makeCut<float>( _vc->get("LepGood_sip3d"   , elIdx)          , 4     , "<"  , "SIP 3D"            , 0    , kSBElId)) return false;
+  if(!makeCut<float>(std::abs(_vc->get("LepGood_dz" , elIdx))      , 0.1   , "<"  , "dz selection"      , 0    , kSBElId)) return false;
+  if(!makeCut<int>( _vc->get("LepGood_eleCutId2012_full5x5", elIdx), 3     , ">=" , "POG CB WP-M Id "   , 0    , kSBElId)) return false;
+  if(!makeCut<int>( _vc->get("LepGood_tightCharge", elIdx)         , 1     , ">"  , "charge selection"  , 0    , kSBElId)) return false;
+  
+  bool conv= (_vc->get("LepGood_convVeto", elIdx) > 0 && _vc->get("LepGood_lostHits", elIdx)==0);
+  if(!makeCut( conv, "conversion rejection", "=", kSBElId)) return false;
+  if(!makeCut<float>( _vc->get("LepGood_relIso03", elIdx)    , 0.1, "[]", "Isolation "    , 0.5, kSBElId)) return false;
+
+  return true;
+
+}
+
+
+//____________________________________________________________________________
+bool phys14limits::sidebandMuonSelection(int muIdx){
+  /*
+    does the selection of muons in the sideband
+    parameters: muIdx
+    return: true (if the muon is a muon), false (else)
+  */
+
+  counter("MuonDenominator", kMuId);
+  
+  if(_fakes != "none" && !makeCut<int>(  _vc->get("LepGood_mcMatchId", muIdx) , 0, "!=", "gen not-fake selection", 0, kSBMuId)) return false;
+  if(!makeCut<float>( _vc->get("LepGood_pt"      , muIdx)    , 10., ">", "pt selection"   , 0, kSBMuId)) return false;
+  if(!makeCut<float>( _vc->get("LepGood_eta"     , muIdx)    , 2.4, "<", "eta selection"  , 0, kSBMuId)) return false;
+  if(!makeCut<float>( _vc->get("LepGood_sip3d"   , muIdx)    , 4  , "<", "SIP 3D"         , 0, kSBMuId)) return false;
+  if(!makeCut<float>(std::abs(_vc->get("LepGood_dz", muIdx)) , 0.1, "<", "dz selection"  , 0, kSBMuId)) return false;
+  if(!makeCut<int>( _vc->get("LepGood_tightId"   , muIdx)    , 1  , ">=", "POG CB WP-T Id", 0, kSBMuId)) return false;
+  if(!makeCut<float>( _vc->get("LepGood_relIso03", muIdx)    , 0.1, "[]", "Isolation "    , 0.5, kSBMuId)) return false;
   
   return true;
 
@@ -1077,6 +1138,8 @@ bool phys14limits::baseSelection(){
   if(_isData && !makeCut<int>(_vc->get("HLT_MuEG")    , 1, "=", "HLT MuEG"    ) ) return false;	
 
   // lepton multiplicity
+  //int nleps = _nSBLeps;
+  //if(_usesb == "SR") nleps = _nLeps;
   if(!makeCut<int>( _nLeps, 2, ">=", "lepton multiplicity and flavor" ) ) return false; 
 
   // veto on third lepton using all selected leptons
@@ -1085,6 +1148,62 @@ bool phys14limits::baseSelection(){
   // selecting best same-sign pair 
   bool is_ss_event = ssEventSelection();
   if(!makeCut( is_ss_event , "same-sign selection", "=") ) return false;
+
+  return true;
+
+}
+
+
+//____________________________________________________________________________
+bool phys14limits::fromHadrTau(int lepIdx){
+  /*
+    looks if a lepton most-likely comes from a hadronic tau decay
+    attention: this function assumes that every tau decays hadronically, make sure that it is so
+  */
+
+  for(int i = 0; i < _vc->get("nGenPart"); ++i){
+    int pdg = _vc->get("GenPart_pdgId", i);
+    if(std::abs(pdg) == 15){
+      float dr = KineUtils::dR(_vc->get("LepGood_eta", lepIdx), _vc->get("GenPart_eta", i),
+                               _vc->get("LepGood_phi", lepIdx), _vc->get("GenPart_phi", i));
+      if(dr < 0.3)
+        return true;
+    }
+  }
+
+  return false;
+
+}
+
+
+//____________________________________________________________________________
+bool phys14limits::genSelection(){
+  /*
+	does the gen matching
+  */
+
+  int id1  = _vc->get("LepGood_mcMatchId" , _lep_idx1); 
+  int id2  = _vc->get("LepGood_mcMatchId" , _lep_idx2); 
+  int any1 = _vc->get("LepGood_mcMatchAny", _lep_idx1); 
+  int any2 = _vc->get("LepGood_mcMatchAny", _lep_idx2); 
+
+  if(_sampleName.find("fake") != (size_t) -1){
+    if(id1 == 0 && id2 == 0) return false;
+    if(id1 != 0 && id2 != 0) return false;
+  }
+
+  if(id1 == 0){
+	if     (fromHadrTau(_lep_idx1)) counter("fakes from tau");
+    else if(any1 == 5             ) counter("fakes from b");
+    else if(any1 == 4             ) counter("fakes from c");
+    else if(any1 <= 3             ) counter("fakes from light");
+  }
+  else if(id2 == 0){
+	if     (fromHadrTau(_lep_idx2)) counter("fakes from tau");
+    else if(any2 == 5             ) counter("fakes from b");
+    else if(any2 == 4             ) counter("fakes from c");
+    else if(any2 <= 3             ) counter("fakes from light");
+  }
 
   return true;
 
@@ -1126,7 +1245,7 @@ bool phys14limits::srSelection(){
 
   //if(!makeCut( mllVetoSelection(), "mll vetos", "=") ) return false;
 
-  cout << _vc->get("run") << ":" << _vc->get("lumi") << ":" << _vc->get("evt") << endl;
+  //cout << _vc->get("run") << ":" << _vc->get("lumi") << ":" << _vc->get("evt") << endl;
 
 
 
@@ -1144,40 +1263,47 @@ bool phys14limits::ssEventSelection(){
     return: true (if the leptons all have same-sign), false (else)
   */
 
+  CandList lc = _leps;
+  //if(_usesb == "SR") lc = _leps;
+  //else {
+  //  lc = _leps;
+  //  lc.reserve(lc.size() + distance(_sbLeps.begin(), _sbLeps.end()));
+  //  lc.insert(lc.end(), _sbLeps.begin(), _sbLeps.end());
+  //}
+
   // SF: CHOOSE a SS PAIR, maximizing the number of muons and then pT
   int charge = 0;
   int flavor = 0;
   int flavortmp = 0;
   bool isSS = false;
-  unsigned int lep_idx2(0), lep_idx1(0);
-  for(unsigned int il1 = 0; il1 < _leps.size(); ++il1){
-    for(unsigned int il2 = il1+1; il2 < _leps.size(); ++il2){
-      charge    = _leps[il1]->charge() * _leps[il2]->charge();
-      flavortmp = fabs(_leps[il1]->pdgId())+fabs( _leps[il2]->pdgId());
+  for(unsigned int il1 = 0; il1 < lc.size(); ++il1){
+    for(unsigned int il2 = il1+1; il2 < lc.size(); ++il2){
+      charge    = lc[il1]->charge() * lc[il2]->charge();
+      flavortmp = fabs(lc[il1]->pdgId())+fabs( lc[il2]->pdgId());
       if (charge < 0)         continue; // if the pair is OS skip
       if (flavor > flavortmp) continue; // if the new pair has less muons skip.
       
-      if (_PT == "hh" && _leps[il1]->pt()<25.) continue;
-      if (_PT == "hh" && _leps[il2]->pt()<25.) continue;
+      if (_PT == "hh" && lc[il1]->pt()<25.) continue;
+      if (_PT == "hh" && lc[il2]->pt()<25.) continue;
       
-      if (_PT == "hl" && _leps[il1]->pt()<25.) continue;
-      if (_PT == "hl" && _leps[il2]->pt()>25.) continue;
+      if (_PT == "hl" && lc[il1]->pt()<25.) continue;
+      if (_PT == "hl" && lc[il2]->pt()>25.) continue;
 
-      if (_PT == "ll" && _leps[il1]->pt()>25.) continue;
-      if (_PT == "ll" && _leps[il2]->pt()>25.) continue;
+      if (_PT == "ll" && lc[il1]->pt()>25.) continue;
+      if (_PT == "ll" && lc[il2]->pt()>25.) continue;
       
       flavor = flavortmp;
-      _first  = _leps[il1];   lep_idx1 = il1;
-      _second = _leps[il2];   lep_idx2 = il2; 
+      _first  = lc[il1];   _lep_idx1 = il1;
+      _second = lc[il2];   _lep_idx2 = il2; 
       isSS = true;
     }
   }
 
 
   // any other (also tight) lepton is pushed into the veto
-  for(unsigned int il = 0; il < _leps.size(); ++il){
-    if(il != lep_idx1 && il != lep_idx2) 
-      _vLeps.push_back(_leps[il]);
+  for(unsigned int il = 0; il < lc.size(); ++il){
+    if(il != _lep_idx1 && il != _lep_idx2) 
+      _vLeps.push_back(lc[il]);
   }
 
   
@@ -1375,15 +1501,14 @@ void phys14limits::fillEventPlots(std::string kr){
     parameters: none
     return: none
   */
-
-  fill(kr + "_LepCharge" , eventCharge()        , _weight);
-  fill(kr + "_HT"        , _HT                  , _weight);
-  fill(kr + "_MET"       , _met->pt() , _weight);
   
-  //Candidate* Z = nullptr;
-  //Z = Candidate::create( _first, _second);
-  //fill(kr + "_MLL"       , Z->mass()          , _weight);
-  //fill(kr + "_NBJets"    , _NumKinObj["BJet"]                               , _weight);
+  Candidate* Z = nullptr;
+  Z = Candidate::create( _first, _second);
+
+  fill(kr + "_LepCharge" , eventCharge()       , _weight);
+  fill(kr + "_HT"        , _HT                 , _weight);
+  fill(kr + "_MET"       , _met->pt()          , _weight);
+  fill(kr + "_MLL"       , Z->mass()           , _weight);
   fill(kr + "_NBJets"    , _vc->get(_bvar)    , _weight);
   fill(kr + "_NElectrons", _nEls               , _weight);
   fill(kr + "_NJets"     , _nJets              , _weight);
@@ -1402,21 +1527,45 @@ void phys14limits::fillLeptonPlots(std::string kr){
     return: none
   */
 
-  for(int i = 0; i < _nEls; ++i){
-    fill(kr + "_ElDXY", fabs(_vc->get("LepGood_dxy"     , _elIdx[i])), _weight);
-    fill(kr + "_ElEta", fabs(_vc->get("LepGood_eta"     , _elIdx[i])), _weight);
-    fill(kr + "_ElIso",      _vc->get("LepGood_relIso03", _elIdx[i]) , _weight);
-    fill(kr + "_ElPt" ,      _vc->get("LepGood_pt"      , _elIdx[i]) , _weight);
-    fill(kr + "_ElMT" , Candidate::create( _els[i], _met) -> mass()   , _weight);
+  //CH: we only want to plot first and second lepton, not the veto ones
+  CandList pLeps;
+  pLeps.push_back(_first);
+  pLeps.push_back(_second);
+
+  vector<int> pIdx;
+  pIdx.push_back(_lep_idx1);
+  pIdx.push_back(_lep_idx2);
+
+  for(int i = 0; i < pLeps.size(); ++i){
+    string pp = "El";
+    if(std::abs(pLeps[i] -> pdgId()) == 13) pp = "Mu";
+
+    fill(kr + "_" + pp + "DXY", fabs(_vc->get("LepGood_dxy"     , pIdx[i])), _weight);
+    fill(kr + "_" + pp + "Eta", fabs(_vc->get("LepGood_eta"     , pIdx[i])), _weight);
+    fill(kr + "_" + pp + "Iso",      _vc->get("LepGood_relIso03", pIdx[i]) , _weight);
+    fill(kr + "_" + pp + "Pt" ,      _vc->get("LepGood_pt"      , pIdx[i]) , _weight);
+    fill(kr + "_" + pp + "MT" , Candidate::create( pLeps[i], _met) -> mass(), _weight);
+
+    //CH: filling SIP for fakes in order to do the fitting of the composition
+    if(_vc->get("LepGood_mcMatchId", pIdx[i]) == 0)
+    fill(kr + "_L" + pp + "SIP",     _vc->get("LepGood_sip3d"   , pIdx[i]) , _weight);
   }
 
-  for(int i = 0; i < _nMus; ++i){
-    fill(kr + "_MuDXY", fabs(_vc->get("LepGood_dxy"     , _muIdx[i])), _weight);
-    fill(kr + "_MuEta", fabs(_vc->get("LepGood_eta"     , _muIdx[i])), _weight);
-    fill(kr + "_MuIso",      _vc->get("LepGood_relIso03", _muIdx[i]) , _weight);
-    fill(kr + "_MuPt" ,      _vc->get("LepGood_pt"      , _muIdx[i]) , _weight);
-    fill(kr + "_MuMT" , Candidate::create( _mus[i], _met)->mass()     , _weight);
-  }
+  //for(int i = 0; i < _nEls; ++i){
+  //  fill(kr + "_ElDXY", fabs(_vc->get("LepGood_dxy"     , _elIdx[i])), _weight);
+  //  fill(kr + "_ElEta", fabs(_vc->get("LepGood_eta"     , _elIdx[i])), _weight);
+  //  fill(kr + "_ElIso",      _vc->get("LepGood_relIso03", _elIdx[i]) , _weight);
+  //  fill(kr + "_ElPt" ,      _vc->get("LepGood_pt"      , _elIdx[i]) , _weight);
+  //  fill(kr + "_ElMT" , Candidate::create( _els[i], _met) -> mass()   , _weight);
+  //}
+
+  //for(int i = 0; i < _nMus; ++i){
+  //  fill(kr + "_MuDXY", fabs(_vc->get("LepGood_dxy"     , _muIdx[i])), _weight);
+  //  fill(kr + "_MuEta", fabs(_vc->get("LepGood_eta"     , _muIdx[i])), _weight);
+  //  fill(kr + "_MuIso",      _vc->get("LepGood_relIso03", _muIdx[i]) , _weight);
+  //  fill(kr + "_MuPt" ,      _vc->get("LepGood_pt"      , _muIdx[i]) , _weight);
+  //  fill(kr + "_MuMT" , Candidate::create( _mus[i], _met)->mass()     , _weight);
+  //}
 
 }
 

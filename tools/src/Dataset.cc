@@ -140,12 +140,15 @@ Dataset::addFriend(string friendname){
 int
 Dataset::getNProcEvents(string path, string dir, string fileName, string hname) {
 
-  string p= string(getenv ("MPAF"))+"/workdir";
+  string p= string(getenv ("MPAF"))+"/workdir/data";
   string NameF = p+"/"+path+"/"+dir+"/"+fileName+".root";
-  if(path.find(":")!=(size_t)-1) NameF=path+"/"+fileName+".root";
+  if(path.find("psi.ch")!=(size_t)-1)
+    NameF = "dcap://t3se01.psi.ch:22125/"+path+"/"+fileName+".root";
+  if(path.find(":")!=(size_t)-1) 
+    NameF=path+"/"+fileName+".root";
   if(dir.find("psi.ch")!=(size_t)-1)
     NameF="dcap://t3se01.psi.ch:22125/"+dir+"/"+fileName+".root";
-  
+
   TFile* file = TFile::Open( NameF.c_str() );
   TH1* htmp = (TH1*)file->Get( hname.c_str() );
   int nProc=-1;
@@ -255,6 +258,9 @@ Dataset::loadTree(string path, string dir, string sname, string objName) {
     // adding friend-trees
     for (size_t ft=0; ft<_friends.size(); ft++){
       string NameFr = p+"/data/"+dir+"/"+_friends[ft]+"/evVarFriend_"+sname+".root";
+      if(dir.find("psi.ch")!=(size_t)-1)
+        NameFr="dcap://t3se01.psi.ch:22125/"+dir+"/"+_friends[ft]+"/evVarFriend_"+sname+".root";
+
       string name = _friends[ft]+" = sf/t";
       _chain->AddFriend((name).c_str(),(NameFr).c_str());
     } 

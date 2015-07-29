@@ -108,11 +108,14 @@ void MPAF::analyze(){
   //copy the histograms for the different workflows
   addWorkflowHistos();
 
+  _numDS = _datasets.size();
+
   // loop over given samples
-  for(unsigned int i=0; i<_datasets.size(); ++i){
+  for(unsigned int i=0; i<_numDS; ++i){
 		
     // open file
     _sampleName = _datasets[i]->getName();
+
     _inds = i;
     _isData = _datasets[i]->isPPcolDataset();
     
@@ -127,10 +130,13 @@ void MPAF::analyze(){
 	
     // loop over entries
     unsigned int nEvts = _datasets[i]->getNEvents();
-    if(_nEvtMax!=(size_t)-1) nEvts =  min(_nEvtMax+_nSkip,nEvts);
+    if(_nEvtMax!=-1) nEvts =  min(_nEvtMax+_nSkip,nEvts);
+
     
-    cout<<" Processing dataset : "<<_sampleName<<"  (running on "<<nEvts<<" events)"<<endl;
-    
+    cout<<" Starting processing dataset : "<<_sampleName<<"  (running on "<<nEvts<<" events)"<<endl;
+    _averageJetPtRatio = 0.;
+    _numJetPtRatio = 0;
+
     boost::progress_display show_progress( nEvts );
     for(_ie = _nSkip; _ie < nEvts; ++_ie) {
       ++show_progress;
@@ -197,7 +203,8 @@ void MPAF::analyze(){
 		
     //cleaning memory
     _datasets[i]->freeMemory();
-  
+ 
+    cout << "average Jet Pt ratio for the leptons is " << (_averageJetPtRatio / _numJetPtRatio) << endl; 
 
   }
 
@@ -207,6 +214,7 @@ void MPAF::analyze(){
   cout<<"   CPU time = "<<timeCPU/nE<<" s/evt "<<"->"<<nE/timeCPU<<" Hz"<<endl<<endl;
 
   // write all outputs to disk
+  writeOutput();
   internalWriteOutput();
 
   if(_summary)
@@ -223,7 +231,7 @@ void MPAF::loadConfigurationFile(std::string cfg){
   */
 
   _inputVars = Parser::parseFile(cfg);
-
+  _nEvtMax = -1;
   string tName;
   vector<string> _friends;
 
@@ -402,6 +410,8 @@ void MPAF::internalWriteOutput() {
   for(unsigned int ids=0;ids<_datasets.size(); ++ids) {
     cnts[ _datasets[ids]->getName() ] = _datasets[ids]->getNProcEvents(0);
   }
+
+  cout << "writing output to disk" << endl;
 
   _hm->saveHistos (_className, _cfgName, cnts);
   _au->saveNumbers(_className, _cfgName, cnts);

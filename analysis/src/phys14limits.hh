@@ -42,16 +42,20 @@ private:
   bool electronSelection(int);
   bool goodJetSelection(int);
   bool muonSelection(int);
+  bool sidebandElectronSelection(int);
+  bool sidebandMuonSelection(int);
   bool tightVetoElectronSelection(int);
   bool tightVetoMuonSelection(int);
   bool vetoElectronSelection(int);
   bool vetoMuonSelection(int);
 
-  void setCut(std::string, float, std::string, float = 0); 
+  void setCut(std::string, float, std::string, float = 0);
   void setSignalRegion();
 
   bool cernSelection();
   bool baseSelection();
+  bool fromHadrTau(int);
+  bool genSelection();
   bool mllVetoSelection();
   bool mllLMGVeto(Candidate * cand, Candidate * veto);
   bool mllZVeto(Candidate * cand, Candidate * veto);
@@ -72,10 +76,10 @@ private:
 
   bool dilepIsolated();
 
-private: 
+private:
 
   //counter categories, 0 is ALWAYS global (even if not specified later)
-  enum {kGlobal=0, kElId, kTVElId, kVElId, kMuId, kTVMuId, kVMuId, kJetId, kBJetId, kVetoLepSel, kLMGVetoLepSel, kZVetoLepSel};
+  enum {kGlobal=0, kElId, kSBElId, kTVElId, kVElId, kMuId, kSBMuId, kTVMuId, kVMuId, kJetId, kBJetId, kVetoLepSel, kLMGVetoLepSel, kZVetoLepSel};
 
   enum {kNoGenMatch=0, kMisMatchPdgId,
 	kMisChargePdgId, kGenMatched};
@@ -105,42 +109,54 @@ private:
   float _upValCutNBJetsSR;
 	
   std::vector<int> _elIdx;
-  std::vector<int> _tVElIdx;
-  std::vector<int> _vElIdx;
   std::vector<int> _lepIdx;
-  std::vector<int> _tVLepIdx;
-  std::vector<int> _vLepIdx;
   std::vector<int> _muIdx;
+  std::vector<int> _sbElIdx;
+  std::vector<int> _sbLepIdx;
+  std::vector<int> _sbMuIdx;
+  std::vector<int> _tVElIdx;
+  std::vector<int> _tVLepIdx;
   std::vector<int> _tVMuIdx;
+  std::vector<int> _vElIdx;
+  std::vector<int> _vLepIdx;
   std::vector<int> _vMuIdx;
 
   int _nEls;
-  int _nTVEls;
-  int _nVEls;
   int _nLeps;
-  int _nTVLeps;
-  int _nVLeps;
   int _nMus;
+  int _nSBEls;
+  int _nSBLeps;
+  int _nSBMus;
+  int _nTVEls;
+  int _nTVLeps;
   int _nTVMus;
+  int _nVEls;
+  int _nVLeps;
   int _nVMus;
   int _nJets;
   int _nBJets;
 
-  CandList _leps;
-  CandList _tVLeps;
-  CandList _vLeps;
   CandList _els;
-  CandList _tVEls;
-  CandList _vEls;
+  CandList _leps;
   CandList _mus;
+  CandList _sbEls;
+  CandList _sbLeps;
+  CandList _sbMus;
+  CandList _tVEls;
+  CandList _tVLeps;
   CandList _tVMus;
+  CandList _vEls;
+  CandList _vLeps;
   CandList _vMus;
   CandList _jets;
   CandList _bJets;
   Candidate * _met;
+
   Candidate * _first;
   Candidate * _second;
-  
+  int _lep_idx1;
+  int _lep_idx2;
+ 
   float _HT;
 
 
@@ -153,6 +169,9 @@ private:
   string _PT;
   string _BR;
   string _SR;
+
+  string _usesb;
+  string _fakes;
 
 };
 

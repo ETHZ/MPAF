@@ -13,6 +13,9 @@ using namespace std;
 #include "analysis/src/SUSY3L_sync2.hh"
 #include "analysis/src/phys14limits.hh"
 #include "analysis/src/FakeRatio.hh"
+#include "analysis/src/FakeRatioStudy.hh"
+#include "analysis/src/sideband.hh"
+#include "analysis/src/FRinSitu.hh"
 #include "analysis/src/SSDL2015.hh"
 #include "analysis/src/UncertaintyTest.hh"
 
@@ -48,10 +51,19 @@ AnalysisFactory::get(const string& analysis, const string& cfg) {
   if(analysis=="FakeRatio") {
     return new FakeRatio(cfg);
   }
- if(analysis=="SSDL2015") {
+  if(analysis=="FakeRatioStudy") {
+    return new FakeRatioStudy(cfg);
+  }
+  if(analysis=="sideband") {
+    return new sideband(cfg);
+  }
+  if(analysis=="FRinSitu") {
+    return new FRinSitu(cfg);
+  }
+  if(analysis=="SSDL2015") {
     return new SSDL2015(cfg);
   }
- if(analysis=="UncertaintyTest") {
+  if(analysis=="UncertaintyTest") {
     return new UncertaintyTest(cfg);
   }
   return 0;

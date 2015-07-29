@@ -15,7 +15,7 @@ public:
   
   bool elMvaSel(int elIdx, int wp) const;
   bool muIdSel(int idx, int wp) const;
-  bool elIdSel(int idx, int wp, int mvaWp) const;
+  bool elIdSel(int idx, int wp, int mvaWp = kTight) const;
   bool multiIsoSel(int idx, int wp) const;
   bool multiIsoSelCone(int idx, int wp) const;
   bool invMultiIsoSel(int idx, int wp) const;
@@ -41,7 +41,8 @@ public:
   CandList bestSSPair(Candidate* c1, const CandList* leps, bool byflav,
 		      bool bypassMV, float pTthr, int& idx1, int& idx2);
   
-  float conePt(int idx) const;
+  float closestJetPt(int idx) const;
+  float conePt(int idx, int isoWp = kTight) const; 
 
   enum {kDenom=0,
 	kLoose,
