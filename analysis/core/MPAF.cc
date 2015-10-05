@@ -266,8 +266,7 @@ void MPAF::loadConfigurationFile(std::string cfg){
     }
     if(it->second.type==Parser::kSummary){
       _summary = atoi(it->second.val.c_str());
-  }
-    
+    }
   }
 
   //datasets
@@ -281,6 +280,7 @@ void MPAF::loadConfigurationFile(std::string cfg){
     string dirName="";
     bool absdir=false;
     vector<string> opts= it->second.opts;
+    string _ft="";
     if(opts.size()!=0) {
       for(size_t i=0;i<opts.size();i++) {
 	if(opts[i].substr(0,4)=="pfx:") {
@@ -294,7 +294,7 @@ void MPAF::loadConfigurationFile(std::string cfg){
           absdir=true;
         }
 	if(opts[i].substr(0,3)=="ft:"){
-	  _friends.push_back(opts[i].substr(3, opts[i].size()-3 ));
+	  _ft=opts[i].substr(3, opts[i].size()-3 );
 	} 
       }
     }
@@ -312,7 +312,8 @@ void MPAF::loadConfigurationFile(std::string cfg){
     for (size_t ft=0; ft<_friends.size();ft++) {
       _datasets.back()->addFriend(_friends[ft].c_str()); 
     }
-
+    if(_ft!="") _datasets.back()->addFriend(_ft.c_str());
+    
     if(!absdir)
       _datasets.back()->addSample(sId, _inputPath, dirName, tName, _hname, _hwgtname, 1.0, 1.0, 1.0, 1.0);
     else
