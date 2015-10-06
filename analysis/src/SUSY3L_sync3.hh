@@ -10,17 +10,17 @@
 ******************************************************************************
 *****************************************************************************/
 
-#ifndef SUSY3L_HH
-#define SUSY3L_HH
+#ifndef SUSY3L_sync3_HH
+#define SUSY3L_sync3_HH
 
 #include "analysis/core/MPAF.hh"
 
-class SUSY3L: public MPAF {
+class SUSY3L_sync3: public MPAF {
 
 public:
     // Member Functions
-    SUSY3L(std::string);
-    virtual ~SUSY3L();
+    SUSY3L_sync3(std::string);
+    virtual ~SUSY3L_sync3();
 
 private:
     void initialize();

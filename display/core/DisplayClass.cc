@@ -861,7 +861,6 @@ DisplayClass::prepareHistograms(const hObs* theobs) {
     
     hTmps[it] = (TH1*)theobs->hs[ih]->Clone();
     hTmps[it]->Scale( _lumi );
-
   }
   //================================
     
@@ -900,7 +899,7 @@ DisplayClass::prepareHistograms(const hObs* theobs) {
     
     _itCol = _colors.find( _names[_nhmc-ih-1] );
     _itW = _gWeights.find( _names[_nhmc-ih-1] );
-    
+   
     _hClones[ih] = (TH1*)hTmps[ih]->Clone();
     _hClonesNoStack[ih] = (TH1*)hTmps[ih]->Clone();
 
@@ -1306,6 +1305,7 @@ DisplayClass::prepareHistograms(const hObs* theobs) {
     if(_normOpts.find("norm")!=_normOpts.end() || 
        _normOpts.find("uni")!=_normOpts.end() )
       ym = ymin;
+    if(ymin <=0 && _logYScale==true){ymin=0.01;ym=0.01;} 
     _empty->GetYaxis()->SetRangeUser( ym, ymax );
     if(_userYScale)
       _empty->GetYaxis()->SetRangeUser( _ymin, _ymax );
@@ -1477,6 +1477,8 @@ DisplayClass::drawDataMCRatio() {
   emptyHisto->GetXaxis()->SetTickLength(0.09);
   emptyHisto->GetYaxis()->SetTickLength(0.05);
   
+  ratio->SetMarkerStyle(20);
+  ratio->SetMarkerColor(1);
   ratio->GetYaxis()->SetRangeUser(  0.4, 1.6);
   ratio->GetXaxis()->SetNdivisions(_Xdiv[0],_Xdiv[1],_Xdiv[2]);
   ratio->GetYaxis()->SetNdivisions(3,_Ydiv[1],_Ydiv[2]);
@@ -1621,7 +1623,7 @@ DisplayClass::ratioObservables(vector<const hObs*> theObs) {
     ymin = min( HistoUtils::getGraphYlowWithError(ratioData, _xmin, _xmax ), ymin );
     ymax = max( HistoUtils::getGraphYhighWithError(ratioData, _xmin, _xmax ), ymax );
   }
-  
+ 
   _empty->GetYaxis()->SetRangeUser(ymin*0.9, ymax*1.1);
 
   _empty->DrawCopy();
@@ -2157,6 +2159,7 @@ DisplayClass::prepareStatistics( vector<pair<string,vector<vector<float> > > > v
   else
     ymax*=1.3;
 
+ 
   emptyH->GetYaxis()->SetRangeUser(ymin,ymax);
   emptyH->GetXaxis()->SetNdivisions(_Xdiv[0],_Xdiv[1],_Xdiv[2]);
   emptyH->GetYaxis()->SetNdivisions(_Ydiv[0],_Ydiv[1],_Ydiv[2]);
@@ -2597,7 +2600,8 @@ DisplayClass::drawDetailSystematics(bool cumul) {
   emptyHisto->GetXaxis()->SetTickLength(0.09);
   emptyHisto->GetYaxis()->SetTickLength(0.05);
   emptyHisto->GetXaxis()->SetLabelOffset(0.011);
-  
+ 
+ 
   ratio->GetYaxis()->SetRangeUser(  0.3, 1.7);
   ratio->GetXaxis()->SetNdivisions(_Xdiv[0],_Xdiv[1],_Xdiv[2]);
   ratio->GetYaxis()->SetNdivisions(3,_Ydiv[1],_Ydiv[2]);

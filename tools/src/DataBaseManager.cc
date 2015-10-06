@@ -41,66 +41,66 @@ DataBaseManager::readDb(string key, string dbName) {
       string line;
       while(getline(fDb, line)) 
         {
-	  //cout << line << endl;
+      //cout << line << endl;
 
-	  istringstream iss(line);
-	  vector<string> tks;
-	  copy(istream_iterator<string>(iss),
-	       istream_iterator<string>(),
-	       back_inserter<vector<string> >(tks));
+      istringstream iss(line);
+      vector<string> tks;
+      copy(istream_iterator<string>(iss),
+           istream_iterator<string>(),
+           back_inserter<vector<string> >(tks));
 
-	  if(line.size()<2 || line.substr(0,2)=="//") {
+      if(line.size()<2 || line.substr(0,2)=="//") {
 
-	    if(header) {
-	      
-	      nN=tks.size();
-	      for(int is=0;is<nN;is++) {
-		if(tks[is].find("v")!=(size_t)-1 || tks[is].find("V")!=(size_t)-1
-		   || tks[is].find("vs")!=(size_t)-1 || tks[is].find("VS")!=(size_t)-1)
-		  nV++;	    
-	      
-		if(tks[is].find("vs")!=(size_t)-1 || tks[is].find("VS")!=(size_t)-1)
-		  strIdxs.push_back(nV-1);
-	      }
+        if(header) {
+          
+          nN=tks.size();
+          for(int is=0;is<nN;is++) {
+        if(tks[is].find("v")!=(size_t)-1 || tks[is].find("V")!=(size_t)-1
+           || tks[is].find("vs")!=(size_t)-1 || tks[is].find("VS")!=(size_t)-1)
+          nV++;     
+          
+        if(tks[is].find("vs")!=(size_t)-1 || tks[is].find("VS")!=(size_t)-1)
+          strIdxs.push_back(nV-1);
+          }
 
-	      nE=tks.size()-nV-1;
-	      
-	      vector<vector<float> > tmp(nV,vector<float>(0,0)); 
-	      _cDbLim[key] = tmp;
-	      
-	      header=false;
-	    }
-	  
-	    continue;
-	  }
-	  else if(header) {
-	    cout<<" Error, no header in the database file : "<<dbName<<endl;
-	  }
+          nE=tks.size()-nV-1;
+          
+          vector<vector<float> > tmp(nV,vector<float>(0,0)); 
+          _cDbLim[key] = tmp;
+          
+          header=false;
+        }
+      
+        continue;
+      }
+      else if(header) {
+        cout<<" Error, no header in the database file : "<<dbName<<endl;
+      }
 
-	  // now read the database =====================================
+      // now read the database =====================================
 
-	  for(int i=0;i<nV;i++) {
-	    
-	    float val = atof(tks[i].c_str());
-	    for(size_t idx=0;idx<strIdxs.size();idx++)
-	      if(strIdxs[idx] == i ) {
-		val = _strIdx;
-		_mStrIdx[tks[i]+key] = _strIdx;
-		_strIdx++;
-	      }
+      for(int i=0;i<nV;i++) {
+        
+        float val = atof(tks[i].c_str());
+        for(size_t idx=0;idx<strIdxs.size();idx++)
+          if(strIdxs[idx] == i ) {
+        val = _strIdx;
+        _mStrIdx[tks[i]+key] = _strIdx;
+        _strIdx++;
+          }
 
-	    bool isReg=false;
-	    for(size_t ib=0;ib<_cDbLim[key][i].size();ib++) {
-	      if(_cDbLim[key][i][ib]==val ||
-		 fabs(_cDbLim[key][i][ib]-val) < 0.00001 ) isReg=true; // ... = condition does not perfectly work
-	    }
+        bool isReg=false;
+        for(size_t ib=0;ib<_cDbLim[key][i].size();ib++) {
+          if(_cDbLim[key][i][ib]==val ||
+         fabs(_cDbLim[key][i][ib]-val) < 0.00001 ) isReg=true; // ... = condition does not perfectly work
+        }
 
-	    if(!isReg) {
-	      _cDbLim[key][i].push_back( val );
-	    }
-	  }
+        if(!isReg) {
+          _cDbLim[key][i].push_back( val );
+        }
+      }
 
-	} //first reading to have the size
+    } //first reading to have the size
       
       //ugly :( why ROOT does not support vectors...
       int* nBins=new int(nV);
@@ -108,11 +108,11 @@ DataBaseManager::readDb(string key, string dbName) {
       double* max=new double(nV);
 
       for(int i=0;i<nV;i++) {
-	_cDbLim[key][i].push_back( _cDbLim[key][i].back()+1 ); //last bin
+    _cDbLim[key][i].push_back( _cDbLim[key][i].back()+1 ); //last bin
 
-	nBins[i] = _cDbLim[key][i].size();
-	min[i] = _cDbLim[key][i][0];
-	max[i] = _cDbLim[key][i].back();
+    nBins[i] = _cDbLim[key][i].size();
+    min[i] = _cDbLim[key][i][0];
+    max[i] = _cDbLim[key][i].back();
       }
       
       
@@ -125,67 +125,67 @@ DataBaseManager::readDb(string key, string dbName) {
       fDb.seekg (0, fDb.beg);
       
       while(getline(fDb, line)) 
-	{
-	  
-	  istringstream iss(line);
-	  vector<string> tks;
-	  copy(istream_iterator<string>(iss),
-	       istream_iterator<string>(),
-	       back_inserter<vector<string> >(tks));
+    {
+      
+      istringstream iss(line);
+      vector<string> tks;
+      copy(istream_iterator<string>(iss),
+           istream_iterator<string>(),
+           back_inserter<vector<string> >(tks));
         
-	  if(line.size()<2 || line.substr(0,2)=="//") {
-	    continue;
-	  }
+      if(line.size()<2 || line.substr(0,2)=="//") {
+        continue;
+      }
 
-	  int* vbin=new int[nV];
-	  
-	  for(int i=0;i<nV;i++) {
-	    
-	    float val = atof(tks[i].c_str());
-	    for(size_t idx=0;idx<strIdxs.size();idx++)
-	      if(strIdxs[idx] == i ) {
-		val = _mStrIdx[tks[i]+key];
-	      }
-	    
-	    vbin[i] = StatUtils::findBin<float>(val, _cDbLim[key][i]);
-	  }
-	  
-	  _mDBs[ key ]->SetBinContent(vbin, atof(tks[nV].c_str()) ); //value
-	  idxs[  _mDBs[ key ]->GetBin( vbin ) ] = vbin;
+      int* vbin=new int[nV];
+      
+      for(int i=0;i<nV;i++) {
+        
+        float val = atof(tks[i].c_str());
+        for(size_t idx=0;idx<strIdxs.size();idx++)
+          if(strIdxs[idx] == i ) {
+        val = _mStrIdx[tks[i]+key];
+          }
+        
+        vbin[i] = StatUtils::findBin<float>(val, _cDbLim[key][i]);
+      }
+      
+      _mDBs[ key ]->SetBinContent(vbin, atof(tks[nV].c_str()) ); //value
+      idxs[  _mDBs[ key ]->GetBin( vbin ) ] = vbin;
 
-	  switch(nE) {
+      switch(nE) {
 
-	  case 0:
-	    _mDBEHs[ key ]->SetBinContent(vbin, 0 );
-	    _mDBELs[ key ]->SetBinContent(vbin, 0 );
-	    break;
+      case 0:
+        _mDBEHs[ key ]->SetBinContent(vbin, 0 );
+        _mDBELs[ key ]->SetBinContent(vbin, 0 );
+        break;
 
-	  case 1:
-	    _mDBEHs[ key ]->SetBinContent(vbin, atof(tks[nV+1].c_str()) );
-	    _mDBELs[ key ]->SetBinContent(vbin, atof(tks[nV+1].c_str()) );
-	    break;
+      case 1:
+        _mDBEHs[ key ]->SetBinContent(vbin, atof(tks[nV+1].c_str()) );
+        _mDBELs[ key ]->SetBinContent(vbin, atof(tks[nV+1].c_str()) );
+        break;
 
-	  case 2:
-	    _mDBEHs[ key ]->SetBinContent(vbin, atof(tks[nV+1].c_str()) );
-	    _mDBELs[ key ]->SetBinContent(vbin, atof(tks[nV+2].c_str()) );
-	    break;
-	    
-	  case 3:
-	    {
-	      float em = sqrt( pow( atof(tks[nV+1].c_str()), 2) + pow( atof(tks[nV+3].c_str()), 2) );
-	      float eM =  sqrt( pow( atof(tks[nV+2].c_str()), 2) + pow( atof(tks[nV+3].c_str()), 2) );
-	      _mDBEHs[ key ]->SetBinContent(vbin, em );
-	      _mDBELs[ key ]->SetBinContent(vbin, eM );
-	    break;
-	    }	    
+      case 2:
+        _mDBEHs[ key ]->SetBinContent(vbin, atof(tks[nV+1].c_str()) );
+        _mDBELs[ key ]->SetBinContent(vbin, atof(tks[nV+2].c_str()) );
+        break;
+        
+      case 3:
+        {
+          float em = sqrt( pow( atof(tks[nV+1].c_str()), 2) + pow( atof(tks[nV+3].c_str()), 2) );
+          float eM =  sqrt( pow( atof(tks[nV+2].c_str()), 2) + pow( atof(tks[nV+3].c_str()), 2) );
+          _mDBEHs[ key ]->SetBinContent(vbin, em );
+          _mDBELs[ key ]->SetBinContent(vbin, eM );
+        break;
+        }       
 
-	  default:
-	    cout<<"Error, database format unrecognized ( "<<dbName<<" ) "<<endl;
-	    abort();
-	    break;
-	  }
-	  
-	}//getline
+      default:
+        cout<<"Error, database format unrecognized ( "<<dbName<<" ) "<<endl;
+        abort();
+        break;
+      }
+      
+    }//getline
 
       fDb.close();
     }//file
@@ -282,29 +282,29 @@ DataBaseManager::readDbHisto(string key, string dbName, string hname) {
   case 1:
     {
       if(!graph) {
-	int nB= _cDbLim[key][0].size();
-	for(int i=0;i<nB;i++ ) {
-	  int vbin[1]={ i };
-	  _mDBs[ key ]->SetBinContent( vbin,  (i<nB)?((TH1*)obj)->GetBinContent(vbin[0]+1 ):1. );
-	  _mDBEHs[ key ]->SetBinContent(vbin, (i<nB)?((TH1*)obj)->GetBinError( vbin[0]+1 ):1. );
-	  _mDBELs[ key ]->SetBinContent(vbin, (i<nB)?((TH1*)obj)->GetBinError( vbin[0]+1 ):1. );
+    int nB= _cDbLim[key][0].size();
+    for(int i=0;i<nB;i++ ) {
+      int vbin[1]={ i };
+      _mDBs[ key ]->SetBinContent( vbin,  (i<nB)?((TH1*)obj)->GetBinContent(vbin[0]+1 ):1. );
+      _mDBEHs[ key ]->SetBinContent(vbin, (i<nB)?((TH1*)obj)->GetBinError( vbin[0]+1 ):1. );
+      _mDBELs[ key ]->SetBinContent(vbin, (i<nB)?((TH1*)obj)->GetBinError( vbin[0]+1 ):1. );
 
-	  idxs[  _mDBs[ key ]->GetBin( vbin ) ] = vbin;
-	}
+      idxs[  _mDBs[ key ]->GetBin( vbin ) ] = vbin;
+    }
       }
       else {
-	int nB= _cDbLim[key][0].size();
-	double x,y,ey;
-	for(int i=0;i<nB;i++ ) {
-	  int vbin[1]={ i };
-	  ((TGraph*)obj)->GetPoint(i,x,y);
-	  ey = ((TGraph*)obj)->GetErrorY(i);
-	  _mDBs[ key ]->SetBinContent( vbin,  (i<nB)?y:1. );
-	  _mDBEHs[ key ]->SetBinContent(vbin, (i<nB)?ey:1. );
-	  _mDBELs[ key ]->SetBinContent(vbin, (i<nB)?ey:1. );
+    int nB= _cDbLim[key][0].size();
+    double x,y,ey;
+    for(int i=0;i<nB;i++ ) {
+      int vbin[1]={ i };
+      ((TGraph*)obj)->GetPoint(i,x,y);
+      ey = ((TGraph*)obj)->GetErrorY(i);
+      _mDBs[ key ]->SetBinContent( vbin,  (i<nB)?y:1. );
+      _mDBEHs[ key ]->SetBinContent(vbin, (i<nB)?ey:1. );
+      _mDBELs[ key ]->SetBinContent(vbin, (i<nB)?ey:1. );
 
-	  idxs[  _mDBs[ key ]->GetBin( vbin ) ] = vbin;
-	}
+      idxs[  _mDBs[ key ]->GetBin( vbin ) ] = vbin;
+    }
       }    
       break;
     }
@@ -314,12 +314,12 @@ DataBaseManager::readDbHisto(string key, string dbName, string hname) {
      int nBy= _cDbLim[key][1].size();
      for(int i=0;i<nBx;i++ ) {
        for(int j=0;j<nBy;j++ ) {
-	 int vbin[2]={ i, j };
-	 _mDBs[ key ]->SetBinContent( vbin, (i<nBx && j<nBy)?((TH2*)obj)->GetBinContent( vbin[0]+1, vbin[1]+1 ):1. );
-	 _mDBEHs[ key ]->SetBinContent( vbin, (i<nBx && j<nBy)?((TH2*)obj)->GetBinError( vbin[0]+1, vbin[1]+1 ):1. );
-	 _mDBELs[ key ]->SetBinContent( vbin, (i<nBx && j<nBy)?((TH2*)obj)->GetBinError( vbin[0]+1, vbin[1]+1 ):1. );
-	 
-	 idxs[  _mDBs[ key ]->GetBin( vbin ) ] = vbin;
+     int vbin[2]={ i, j };
+     _mDBs[ key ]->SetBinContent( vbin, (i<nBx && j<nBy)?((TH2*)obj)->GetBinContent( vbin[0]+1, vbin[1]+1 ):1. );
+     _mDBEHs[ key ]->SetBinContent( vbin, (i<nBx && j<nBy)?((TH2*)obj)->GetBinError( vbin[0]+1, vbin[1]+1 ):1. );
+     _mDBELs[ key ]->SetBinContent( vbin, (i<nBx && j<nBy)?((TH2*)obj)->GetBinError( vbin[0]+1, vbin[1]+1 ):1. );
+     
+     idxs[  _mDBs[ key ]->GetBin( vbin ) ] = vbin;
        }//i    
      }//j
      break;
@@ -330,16 +330,16 @@ DataBaseManager::readDbHisto(string key, string dbName, string hname) {
       int nBy= _cDbLim[key][1].size();
       int nBz= _cDbLim[key][2].size();
       for(int i=0;i<nBx;i++ ) {
-	for(int j=0;j<nBy;j++ ) {
-	  for(int k=0;k<nBz;k++ ) {
-	    int vbin[3]={ i, j, k };
-	    _mDBs[ key ]->SetBinContent( vbin, (i<nBx && j<nBy && k<nBz)?((TH3*)obj)->GetBinContent( vbin[0]+1, vbin[1]+1, vbin[2]+1 ):1. );
-	    _mDBEHs[ key ]->SetBinContent( vbin, (i<nBx && j<nBy && k<nBz)?((TH3*)obj)->GetBinError( vbin[0]+1, vbin[1]+1, vbin[2]+1 ):1. );
-	    _mDBELs[ key ]->SetBinContent( vbin, (i<nBx && j<nBy && k<nBz)?((TH3*)obj)->GetBinError( vbin[0]+1, vbin[1]+1, vbin[2]+1 ):1. );
+    for(int j=0;j<nBy;j++ ) {
+      for(int k=0;k<nBz;k++ ) {
+        int vbin[3]={ i, j, k };
+        _mDBs[ key ]->SetBinContent( vbin, (i<nBx && j<nBy && k<nBz)?((TH3*)obj)->GetBinContent( vbin[0]+1, vbin[1]+1, vbin[2]+1 ):1. );
+        _mDBEHs[ key ]->SetBinContent( vbin, (i<nBx && j<nBy && k<nBz)?((TH3*)obj)->GetBinError( vbin[0]+1, vbin[1]+1, vbin[2]+1 ):1. );
+        _mDBELs[ key ]->SetBinContent( vbin, (i<nBx && j<nBy && k<nBz)?((TH3*)obj)->GetBinError( vbin[0]+1, vbin[1]+1, vbin[2]+1 ):1. );
 
-	    idxs[  _mDBs[ key ]->GetBin( vbin ) ] = vbin;
-	  }//k    
-	}//j
+        idxs[  _mDBs[ key ]->GetBin( vbin ) ] = vbin;
+      }//k    
+    }//j
       }//i
       break;
     } 
@@ -402,7 +402,7 @@ DataBaseManager::exists(string key) {
 
 float 
 DataBaseManager::getDBValue(string key, float v1, float v2, float v3, float v4,
-			    float v5, float v6,float v7, float v8, float v9, float v10) {
+                float v5, float v6,float v7, float v8, float v9, float v10) {
 
   if(!exists(key) ) {
     cout<<"WARNING!! no database "<<key<<" registered! "<<endl;
@@ -425,7 +425,7 @@ DataBaseManager::getDBValue(string key, float v1, float v2, float v3, float v4,
 
 float 
 DataBaseManager::getDBErrH(string key, float v1, float v2, float v3, float v4,
-			   float v5, float v6,float v7, float v8, float v9, float v10) {
+               float v5, float v6,float v7, float v8, float v9, float v10) {
 
   if(!exists(key) ) {
     cout<<"WARNING!! no database "<<key<<" registered! "<<endl;
@@ -448,7 +448,7 @@ DataBaseManager::getDBErrH(string key, float v1, float v2, float v3, float v4,
 
 float 
 DataBaseManager::getDBErrL(string key, float v1, float v2, float v3, float v4,
-			   float v5, float v6,float v7, float v8, float v9, float v10) {
+               float v5, float v6,float v7, float v8, float v9, float v10) {
 
   if(!exists(key) ) {
     cout<<"WARNING!! no database "<<key<<" registered! "<<endl;

@@ -760,6 +760,21 @@ void AnaUtils::printNumbers() {
 	    <<((tmpswtot==-1)?_itEIMap->second.sumwTot:tmpswtot);
 	cout<<"  ("<<_itEIMap->second.N<<" / "<<((tmpNTot==-1)?_itEIMap->second.NTot:tmpNTot)<<")";
 	cout<<"  ---> \t = "<<globEff*100<<" +- "<<globErr*100<<endl;
+
+    //-----------------------
+    //if(_itEIMap->first == "hadronic activity" ){
+    //     std::ofstream outfile;
+    //     outfile.open("/shome/jhoss/analysis/MPAF/eff.txt", std::ios_base::app);
+    //     outfile << _itEIMap->second.sumw << "  ";
+    //}
+    //if(_itEIMap->first == "HLT_DoubleMUHT fired" ){
+    //     std::ofstream outfile;
+    //     outfile.open("/shome/jhoss/analysis/MPAF/eff.txt", std::ios_base::app);
+    //     outfile << _itEIMap->second.sumw << endl; 
+    //     
+    //}
+    //----------------------
+
       
 	tmpswtot =  _itEIMap->second.sumw;
 	tmpNTot = _itEIMap->second.N;

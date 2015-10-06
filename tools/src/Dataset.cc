@@ -356,6 +356,7 @@ Dataset::loadHistos(string path, string dir, string filename, string hname, stri
     map<string, TH1*> tmp;
     
     //MM FIXME, jsut take a too long time to load everything, should be done in a better way thatn disabling everything 
+    //if(varName.find("_")!=string::npos || varName.find("SR")!=string::npos) continue;
     if(varName.find("Fake")!=string::npos || varName.find("SR")!=string::npos) continue;
   
 
