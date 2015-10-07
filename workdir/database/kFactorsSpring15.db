@@ -50,6 +50,7 @@ TBar_tWch_50ns						1.00
 T_tWch							1.00
 T_tWch_50ns						1.00
 WJetsToLNu						1.00
+WJetsToLNu_50ns						1.00
 DYJetsToLL_M50						1.00
 DYJetsToLL_M50_PUflat1050				1.00
 DYJetsToLL_LO_M50_50ns					1.00
@@ -108,3 +109,5 @@ QCD_Pt1400to1800_50ns					1.00
 QCD_Pt1800to2400_50ns					1.00
 QCD_Pt2400to3200_50ns					1.00
 QCD_Pt3200toInf_50ns					1.00
+TTWToLNu                                1.00
+TTZToLLNuNu                             1.00

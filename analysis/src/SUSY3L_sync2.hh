@@ -49,19 +49,20 @@ private:
     void setCut(std::string, float, std::string, float = 0);
     bool hardLegSelection();
     bool checkMultiIso();
-    bool lowMllPair();
     bool ZEventSelection();
     bool ZEventSelectionLoop();
     bool srSelection();
     bool electronMvaCut(int, int);
     bool multiIsolation(int, float, float, float);
     void fillEventPlots(std::string);
-
-
+    float getMT2();
+    void sortSelectedLeps();
+    float lowestOssfMll();
 
     float HT();
     float M_T(float, float, float, float);
     float DeltaPhi(float, float);
+    float MT2(Candidate*, Candidate*, Candidate*, double);
 
     string _selectTaus;
     string _pairmass;
@@ -75,7 +76,10 @@ private:
 
     //cut variables
     float _valCutLepMultiplicityBR;
-    float _pt_cut_hard_leg;
+    float _pt_cut_hard_legs;
+    int   _nHardLeptons;
+    float _pt_cut_hardest_legs;
+    int   _nHardestLeptons;
     float _M_T_3rdLep_MET_cut;
     float _multiIsoWP[5][3];
     float _valCutNJetsBR;
@@ -88,6 +92,7 @@ private:
     float _valCutMETSR;
     float _valCutNJetsSR;
     float _valCutNBJetsSR;
+    float _valCutMllBR;
     
     std::string _cTypeLepMultiplicityBR;
     std::string _cTypeNJetsBR;
@@ -98,6 +103,7 @@ private:
     std::string _cTypeNBJetsSR;
     std::string _cTypeHTSR;
     std::string _cTypeMETSR;
+    std::string _cTypeMllBR;
 
     float _upValCutLepMultiplicityBR;
     float _upValCutNJetsBR;
@@ -108,6 +114,7 @@ private:
     float _upValCutNBJetsSR;
     float _upValCutHTSR;
     float _upValCutMETSR;
+    float _upValCutMllBR;
 
     //vectors for electron, muon, and tau candidates
     std::vector<int> _elIdx;
@@ -123,6 +130,7 @@ private:
     int _nVTaus;
     int _nJets;
     int _nBJets;
+    int _nleps;
 
     //list of object candidates
     CandList _els;
@@ -133,11 +141,15 @@ private:
     CandList _vTaus;
     CandList _jets;
     CandList _bJets;
+    CandList _leps;
     Candidate* _met;
     Candidate* _Z;
+    Candidate* _lep1;
+    Candidate* _lep2;
 
     float _HT;
     float _deltaR;
+    float _mll;
   
     
 };

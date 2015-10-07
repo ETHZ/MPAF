@@ -9,6 +9,7 @@ FILES += phys14exerc
 FILES += SUSY3L
 FILES += SUSY3L_sync
 FILES += SUSY3L_sync2
+FILES += SUSY3L_sync3
 FILES += SSDLBoosted
 FILES += phys14limits
 FILES += sideband

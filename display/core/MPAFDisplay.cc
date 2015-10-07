@@ -377,14 +377,13 @@ MPAFDisplay::setHistograms() {
 	if(is==0) {
 	  htmp = ds->getHisto( obss[io], samples[is] );
 	  htmp->Scale( w );
-	}
+    }
 	else {
 	  htmp->Add( ds->getHisto( obss[io], samples[is] ), w);
-	}
+    }
       } 
 
       _hm->copyHisto( obss[io] , _inds, htmp );
-
       delete htmp;
     
     }

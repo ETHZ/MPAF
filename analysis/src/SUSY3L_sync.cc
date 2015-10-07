@@ -156,8 +156,8 @@ void SUSY3L_sync::run(){
 
     //printout for RA7 synchronization
     int lumi = _vc->get("lumi");
-    int evt = _vc->get("evt");
-    cout << "1" << " " << lumi << " " << evt << " " << _nMus << " " << _nEls << " " << _nTaus << " " << _nJets << " " << _nBJets << endl;
+    //int evt = _vc->get("evt");
+    //cout << "1" << " " << lumi << " " << evt << " " << _nMus << " " << _nEls << " " << _nTaus << " " << _nJets << " " << _nBJets << endl;
 
     // initialization of signal region cuts, categorization of events passing the baseline 
     // selection into different signal regions, and filling of plots

@@ -10,17 +10,17 @@
 ******************************************************************************
 *****************************************************************************/
 
-#ifndef SUSY3L_HH
-#define SUSY3L_HH
+#ifndef SUSY3L_sync3_HH
+#define SUSY3L_sync3_HH
 
 #include "analysis/core/MPAF.hh"
 
-class SUSY3L: public MPAF {
+class SUSY3L_sync3: public MPAF {
 
 public:
     // Member Functions
-    SUSY3L(std::string);
-    virtual ~SUSY3L();
+    SUSY3L_sync3(std::string);
+    virtual ~SUSY3L_sync3();
 
 private:
     void initialize();
@@ -38,11 +38,12 @@ private:
     bool electronSelection(int);
     bool muonSelection(int);
     bool tauSelection(int);
+    bool vetoElectronSelection(int);
+    bool vetoMuonSelection(int);
     bool bJetSelection(int);
     bool goodJetSelection(int);
 
     bool baseSelection();
-    void wzCRSelection();
     void setBaselineRegion();
     void setSignalRegion();
     void setCut(std::string, float, std::string, float = 0);
@@ -53,7 +54,7 @@ private:
     bool srSelection();
     bool electronMvaCut(int, int);
     bool multiIsolation(int, float, float, float);
-    void fillEventPlots();
+    void fillEventPlots(std::string);
     float getMT2();
     void sortSelectedLeps();
     float lowestOssfMll(bool ossf = true);
@@ -77,12 +78,7 @@ private:
 private:
 
     //counter categories, 0 is ALWAYS global (even if not specified later)
-    enum {
-        kGlobal=0,                                      //global counter
-        kElId, kMuId, kTauId, kJetId, kBJetId,          //objects counter
-        conZEvents,                                     //Z cand. counter
-        kWZCR                                           //WZ control region counter
-        };
+    enum {kGlobal=0, kElId, kElVeto, kMuId, kMuVeto, kTauId, kTauVeto, kJetId, kBJetId, conZEvents};
 
     //cut variables
     float _valCutLepMultiplicityBR;
