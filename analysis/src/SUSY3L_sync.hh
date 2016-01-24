@@ -39,12 +39,17 @@ private:
     bool fakableLepton(const Candidate* c, int idx, int pdgId, bool bypass);
     bool tightLepton(const Candidate* c, int idx, int pdgId);
     
-    bool multiLepSelection(bool onZ);
+    bool multiLepSelection();
     void advancedSelection(int WF);
     float getTF_SingleFake(int ic);
     float getTF_DoubleFake(int ic);
     float getTF_TripleFake(int ic);
     bool wzCRSelection();
+    bool ZMuMuSelection();
+    bool ttbarSelection();
+    bool ZElElSelection();
+    bool ZlSelection();
+    bool WlSelection();
     void categorize();
     bool testRegion();
     vector<CandList> build3LCombFake(const CandList tightLeps, vector<unsigned int> idxsT,
@@ -59,14 +64,24 @@ private:
     void setCut(std::string, float, std::string, float = 0);
     bool hardLeg(CandList leptons, int n_hardestLeg, float cut_hardestLeg, int n_hardLeg, float cut_hardLeg);
     void fillHistos();
-    void fillControlPlots();
+    void fillValidationHistos(string reg);
     float getMT2();
     void sortSelectedLeps(CandList leps, std::vector<unsigned int> lepsIdx);
     float lowestOssfMll(CandList leps);
-    bool passMultiLine(bool doubleOnly, bool isolatedOnly);
-    bool passHLTLine(string line);
+    void registerTriggerVars();
+    void readCSCevents();
+    void readEESCevents();
+    void readFilteredEvents(map< std::pair<int,std::pair<int,unsigned long int> > , unsigned int >&, vector<string>);
 
-    float HT();
+    bool passHLTbit();
+    
+    bool passNoiseFilters();
+    bool passCSCfilter();
+    bool passEESCfilter(); 
+    
+    void loadScanHistogram();
+    bool checkMassBenchmark();
+
     float M_T(float, float, float, float);
     float DeltaPhi(float, float);
     float MT2(Candidate*, Candidate*, Candidate*, double);
@@ -74,26 +89,41 @@ private:
     bool _selectMuons;
     bool _selectElectrons;
     bool _selectTaus;
-    bool _onZ;
+    int _onZ; 
+    bool _doPlots;
+    bool _doValidationPlots;
+    int _closureByFlavor;
+    bool _exactlyThreeLep;
+    bool _runSystematics;
     string _BR;
     string _SR;
     string _FR;
-
-
+    int _fastSim;
+    bool _debug;
 
 
 private:
 
     //counter categories, 0 is ALWAYS global (even if not specified later)
-    enum {kGlobal=0,
-    
-    kSR001, kSR002, kSR003, kSR004, kSR005, kSR006, kSR007, kSR008,
-    kSR009, kSR010, kSR011, kSR012, kSR013, kSR014, kSR015,
-    
-    kSR001_Fake, kSR002_Fake, kSR003_Fake, kSR004_Fake, kSR005_Fake, kSR006_Fake, kSR007_Fake, kSR008_Fake,
-    kSR009_Fake, kSR010_Fake, kSR011_Fake, kSR012_Fake, kSR013_Fake, kSR014_Fake, kSR015_Fake,
+  enum {kGlobal=0,
+	
+    kOnZSR001, kOnZSR002, kOnZSR003, kOnZSR004, kOnZSR005, kOnZSR006, kOnZSR007, kOnZSR008,
+	kOnZSR009, kOnZSR010, kOnZSR011, kOnZSR012, kOnZSR013, kOnZSR014, kOnZSR015,
 
-    kGlobalFake,
+	kOffZSR001, kOffZSR002, kOffZSR003, kOffZSR004, kOffZSR005, kOffZSR006, kOffZSR007, kOffZSR008,
+	kOffZSR009, kOffZSR010, kOffZSR011, kOffZSR012, kOffZSR013, kOffZSR014, kOffZSR015,
+    
+	kOnZSR001_Fake, kOnZSR002_Fake, kOnZSR003_Fake, kOnZSR004_Fake, kOnZSR005_Fake, kOnZSR006_Fake, kOnZSR007_Fake, kOnZSR008_Fake,
+	kOnZSR009_Fake, kOnZSR010_Fake, kOnZSR011_Fake, kOnZSR012_Fake, kOnZSR013_Fake, kOnZSR014_Fake, kOnZSR015_Fake,
+	
+	kOffZSR001_Fake, kOffZSR002_Fake, kOffZSR003_Fake, kOffZSR004_Fake, kOffZSR005_Fake, kOffZSR006_Fake, kOffZSR007_Fake, kOffZSR008_Fake,
+	kOffZSR009_Fake, kOffZSR010_Fake, kOffZSR011_Fake, kOffZSR012_Fake, kOffZSR013_Fake, kOffZSR014_Fake, kOffZSR015_Fake,
+
+    kOnZBaseline, kOffZBaseline,
+
+    kOnZBaseline_Fake, kOffZBaseline_Fake,
+    
+    kGlobal_Fake,
     
     kWZCR
     };
@@ -154,6 +184,8 @@ private:
     std::vector<std::pair<std::string, unsigned int> >  _lepJetsIdx;
 
     //length of candiate vectors
+    int _nEls;
+    int _nMus;
     float _nTaus;
     float _nJets;
     float _nBJets;
@@ -181,7 +213,11 @@ private:
     Candidate* _met;
     Candidate* _Z;
     CandList _zPair;
+    Candidate* _l1Cand;
+    Candidate* _l2Cand;
     
+  	bool _isOnZ;
+
     float _HT;
     float _MT2;
     float _deltaR;
@@ -190,23 +226,38 @@ private:
     float _MT;
     float _zMass;
     float _zPt;
-    int _nEls;
-    int _nMus;
+    int _idxL1;
+    int _idxL2;
+ 
+    float _btagW;
   
     std::map<std::string, std::vector<std::vector<std::vector<std::string> > > > _sels;
    
     float _jetThreshold;
     float _bjetThreshold;
+   
+    //HLT
+    vector<string> _vTR_lines;
     
     vector<string> _categs;
     bool _categorization;
     bool _isMultiLep = false;
     bool _isFake = false;
+    int _flavor = -1;
 
     //for fake background
     vector<CandList> _combList;
     vector< vector<int> > _combIdxs;
     vector<int> _combType;
+
+    //for event filter
+    map< std::pair<int,std::pair<int,unsigned long int> > , unsigned int > _filteredCSCEvents;
+    map< std::pair<int,std::pair<int,unsigned long int> > , unsigned int > _filteredEESCEvents;
+
+  	//scan
+  	TH3D* _hScanWeight;
+  	int _nProcEvtScan;
+
 };
 
 #endif
