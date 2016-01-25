@@ -443,7 +443,6 @@ Dataset::getWeight(string sname) const {
   return getWeight(is);
 }
 
-
 string
 Dataset::goodPath(string path){
 

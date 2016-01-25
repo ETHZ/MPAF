@@ -7,6 +7,7 @@ analysis/bin/analysis
 analysis/lib
 cfg/tmpFiles
 display/cards/tmpFiles
+display/cards/tmpFilesShape
 display/lib
 tools/lib
 workdir/*

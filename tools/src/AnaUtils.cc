@@ -1078,7 +1078,7 @@ AnaUtils::retrieveNumbers(string categ, string cname, int scheme, string opt) {
    
     for(size_t id=0;id<dsNames.size();id++) { //datasets
       int ids = idxs[id];
-      
+
       //simulation detail
       _itEIMap=_effMap[ ids ][ icat ].find( sel );
       if(_itEIMap==_effMap[ ids ][ icat ].end() ) {
@@ -1089,6 +1089,7 @@ AnaUtils::retrieveNumbers(string categ, string cname, int scheme, string opt) {
 	p.second[ids][4]["tot"] = 0.;
       }
       else {
+
 	float central;
 	float totUp=0,totDown=0;
 	map<string,float> rU, rD;
@@ -1098,6 +1099,7 @@ AnaUtils::retrieveNumbers(string categ, string cname, int scheme, string opt) {
 	p.second[ids][0]["tot"] = _itEIMap->second.sumw;
 	p.second[ids][1]["tot"] = sqrt(_itEIMap->second.sumw2);
 	p.second[ids][4]["tot"] = _itEIMap->second.N;
+
 
 	p.second[ids][2] = rU;
 	p.second[ids][3] = rD;

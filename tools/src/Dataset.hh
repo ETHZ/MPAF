@@ -121,7 +121,6 @@ public:
   std::vector<std::string> getObservables();
   TH1* getHisto( std::string varName, std::string sName);
 
-
   const Sample* getSample(string sname) const;
   
 

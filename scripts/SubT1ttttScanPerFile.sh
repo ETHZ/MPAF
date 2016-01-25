@@ -28,25 +28,25 @@ while read fileLine; do
 
     while read line; do
 
-	mass=$line
-	
-	if [[ -e $MPAF/cfg/tmpFiles/ssdlScan${mass}.cfg ]]; then
-	    continue
-	fi
+		mass=$line
+		
+		if [[ -e $MPAF/cfg/tmpFiles/ssdlScan_${mass}.cfg ]]; then
+		    continue
+		fi
 
-	dec=`python splitLineScan.py $path $mass`
-	if [[ $dec == 0 ]]; then
-	    continue
-	fi
-	#break
+		dec=`python splitLineScan.py $path $mass`
+		if [[ $dec == 0 ]]; then
+		    continue
+		fi
+		#break
 
 
-	cp $MPAF/cfg/ssdlScan_template_file.cfg $MPAF/cfg/tmpFiles/ssdlScan${mass}.cfg
+		cp $MPAF/cfg/ssdlScan_template_file.cfg $MPAF/cfg/tmpFiles/ssdlScan_${mass}.cfg
 
-	sed -i 's|MASSBENCH|'$mass'|' $MPAF/cfg/tmpFiles/ssdlScan${mass}.cfg
-	sed -i 's|FILE|'$file'|' $MPAF/cfg/tmpFiles/ssdlScan${mass}.cfg
-	sed -i 's|PATH|'$path'|' $MPAF/cfg/tmpFiles/ssdlScan${mass}.cfg
-#	bsub -q 8nh source submitLxbatch.sh cfg/tmpFiles/ssdlScan$mass.cfg
+		sed -i 's|MASSBENCH|'$mass'|' $MPAF/cfg/tmpFiles/ssdlScan_${mass}.cfg
+		sed -i 's|FILE|'$file'|' $MPAF/cfg/tmpFiles/ssdlScan_${mass}.cfg
+		sed -i 's|PATH|'$path'|' $MPAF/cfg/tmpFiles/ssdlScan_${mass}.cfg
+		#bsub -q 8nh source submitLxbatch.sh cfg/tmpFiles/ssdlScan$mass.cfg
 
 
     done < massT1ttt.txt

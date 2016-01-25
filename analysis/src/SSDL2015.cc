@@ -53,7 +53,6 @@ SSDL2015::initialize(){
   _vc->registerVar("HLT_DoubleMuHT"               );
   _vc->registerVar("nVert"                        );
   _vc->registerVar("nTrueInt"                     );
-  _vc->registerVar("nTrueInt"                     );
   _vc->registerVar("nBJetPt40Medium"              );
   _vc->registerVar("puWeight"                     );
   _vc->registerVar("genWeight"                    );
@@ -81,6 +80,7 @@ SSDL2015::initialize(){
   _vc->registerVar("LepGood_lostHits"             );
   _vc->registerVar("LepGood_mvaSusy"              );
   _vc->registerVar("LepGood_mcMatchId"            );
+  _vc->registerVar("LepGood_mcMatchPdgId"         );
   _vc->registerVar("LepGood_mcMatchAny"           );
   _vc->registerVar("LepGood_sigmaIEtaIEta"        );
   _vc->registerVar("LepGood_dEtaScTrkIn"          );
@@ -277,15 +277,15 @@ SSDL2015::initialize(){
   addWorkflow( kWZCR, "WZCR");
 
   //extra input variables
-  _fastSim = getCfgVarI("FastSim", 0);
-  _lepflav = getCfgVarS("LEPFLAV", "all");
-  _leppt   = getCfgVarS("LEPPT"  , "all");
-  _SR      = getCfgVarS("SR"     , "BR02H");
-  _FR      = getCfgVarS("FR"     , "FO2C");
-  _LHESYS = getCfgVarI("LHESYS", 0);
-  _categorization = getCfgVarI("categorization", 1);
-  _mergeSRs = getCfgVarI("mergeSRs",0);
-  _DoValidationPlots = getCfgVarI("ValidationPlots", 0);
+  _fastSim           = getCfgVarI("FastSim"        , 0      );
+  _lepflav           = getCfgVarS("LEPFLAV"        , "all"  );
+  _leppt             = getCfgVarS("LEPPT"          , "all"  );
+  _SR                = getCfgVarS("SR"             , "BR02H");
+  _FR                = getCfgVarS("FR"             , "FO2C" );
+  _LHESYS            = getCfgVarI("LHESYS"         , 0      );
+  _categorization    = getCfgVarI("categorization" , 1      );
+  _mergeSRs          = getCfgVarI("mergeSRs"       , 0      );
+  _DoValidationPlots = getCfgVarI("ValidationPlots", 0      );
 
   //vector<string> jess;
   // jess.push_back("Jet_pt");
@@ -293,8 +293,8 @@ SSDL2015::initialize(){
   
   _dbm->loadDb("jes","JESUncer25nsV5_MC.db");
 
-   //addManualSystSource("EWKFR",SystUtils::kNone);
-   addManualSystSource("Eff",SystUtils::kNone);
+   addManualSystSource("EWKFR",SystUtils::kNone);
+   //addManualSystSource("Eff",SystUtils::kNone);
    //addManualSystSource("Theory",SystUtils::kNone);
    addManualSystSource("JES",SystUtils::kNone);
    addManualSystSource("BTAG",SystUtils::kNone);
@@ -356,6 +356,10 @@ SSDL2015::initialize(){
   _dbm->loadDb("FastSimElSF", "sf_el_tight_IDEmu_ISOEMu_ra5.root", "histo3D");
   _dbm->loadDb("FastSimMuSF", "sf_mu_mediumID_multi.root"        , "histo3D");
 
+  //pileup
+   _dbm->loadDb("puWeights","pileupWeights.root","pileup");
+
+
   //=== signal Xsection, easier to normalize from here.
   _dbm->loadDb("T1ttttXsect", "SignalXsect.db");
  
@@ -378,7 +382,8 @@ SSDL2015::modifyWeight() {
     else {_weight *= _susyMod->getLHEweight(_LHESYS);}
     //pileup weights
     //_weight *= _vc->get("vtxWeight");
-    _weight *= _susyMod->getPuWeight( _vc->get("nVert") );
+    //_weight *= _susyMod->getPuWeight( _vc->get("nVert") );
+    _weight *= _dbm->getDBValue("puWeights", _vc->get("nTrueInt") );
   }
 
 }
@@ -459,10 +464,11 @@ SSDL2015::writeOutput() {
 void
 SSDL2015::run() {
 
+
   if(_fastSim && !checkMassBenchmark() ) return;
   
-  if(_vc->get("isData") && !checkDoubleCount()) return;
-  
+  //if(_vc->get("isData") && !checkDoubleCount()) return;
+
   counter("denominator");
   if(!passNoiseFilters()) return;
   counter("JME filters");
@@ -478,7 +484,7 @@ SSDL2015::run() {
   }
   
    bool ssLepSel=ssLeptonSelection();
-   if(_vc->get("isData") && !_isOS && !_isFake) return; //blinding of signal regions
+   //if(_vc->get("isData") && !_isOS && !_isFake) return; //blinding of signal regions
  
   if(!ssLepSel) {
     // failed same-sign lepton selection, fill WZ control region
@@ -597,9 +603,9 @@ SSDL2015::advancedSelection(int WF) {
     if(!passHLTbit()) return;
   }
   counter("HLT");
-  
+ 
   // HLT AND LEPTON SFs ======================
-  if(!_isData){
+  if(!_vc->get("isData")){
     // trigger * lep1 SF * lep2 SF
     if(!_fastSim) {
       _weight*=_susyMod->GCeventScaleFactor(_l1Cand->pdgId(), _l2Cand->pdgId(),
@@ -620,6 +626,7 @@ SSDL2015::advancedSelection(int WF) {
     
     }
   }
+
   
   //===============================
   _mTmin=min( Candidate::create(_l1Cand, _met)->mass(),
@@ -635,6 +642,7 @@ SSDL2015::advancedSelection(int WF) {
   counter("std baseline");
   
   fillhistos();//fill histos for kGlobal, kGlobalFake, kGlobalmId
+  if(WF == kGlobal && _nBJets >= 0 && _leppt == "hh") counter("BR 00 HH");
  
   if(_categorization) {
     categorize();
@@ -692,6 +700,7 @@ SSDL2015::advancedSelection(int WF) {
   // if(getCurrentWorkflow()==kBR00H_Fake || getCurrentWorkflow()==kBR10H_Fake || getCurrentWorkflow()==kBR20H_Fake || getCurrentWorkflow()==kBR30H_Fake) sr=0;
  
   //if(_isFake && sr > 0) {
+  //if(WF == kGlobal && sr == 33) {
   // cout << Form("%1d %9d %12.0f\t%2d\t%+2d %5.1f\t%+2d %5.1f\t%d\t%2d\t%5.1f\t%6.1f\t%2d\t%2.5f",
   // 	       run, lumi, event, nLep,
   // 	       id1, pt1, id2, pt2,
@@ -1494,6 +1503,13 @@ SSDL2015::genMatchCateg(const Candidate* cand) {
 bool
 SSDL2015::passGenSelection() {
 
+  if( _sampleName.find("WZTo3LNu")!=(size_t)-1){
+    if(_vc->get("LepGood_mcMatchId", _idxL1) != 0 && _vc->get("LepGood_mcMatchPdgId", _idxL1) == _vc->get("LepGood_pdgId", _idxL1) &&
+       _vc->get("LepGood_mcMatchId", _idxL2) != 0 && _vc->get("LepGood_mcMatchPdgId", _idxL2) == _vc->get("LepGood_pdgId", _idxL2)) return true;
+    else return false;
+  }
+
+
   if( _sampleName.find("DYJets")!=(size_t)-1 || _sampleName.find("TTJets")!=(size_t)-1 ) {
     
     if(_sampleName.find("charge")!=(size_t)-1) {
@@ -1536,7 +1552,7 @@ SSDL2015::getFR(Candidate* cand, int idx) {
   if(_FR.find("J")!=string::npos) ptVal/=_vc->get("LepGood_jetPtRatiov2", idx);
 
   ptVal=std::max(ptVal, ptM);
-  
+
   return _dbm->getDBValue(db, std::min( ptVal,(float)69.9),
 			  std::min(etaVal,(float)((std::abs(cand->pdgId())==11)?2.49:2.39) ) );
 
@@ -2537,13 +2553,14 @@ SSDL2015::checkMassBenchmark() {
     float zb = _hScanWeight->GetZaxis()->FindBin(1);
   
     _nProcEvtScan=_hScanWeight->GetBinContent(xb,yb,zb);
-    // cout<<M1<<"/"<<M2<<" -> "<<xb<<"/"<<yb<<"/"<<zb<<" --> "
     // 	<<_hScanWeight->GetBinContent(xb,yb,zb)<<"   "
     // 	<<_dbm->getDBValue("T1tttXsect",M1)<<"  "<<_dbm->getDBValue("T1tttXsect",M1)*2110/_nProcEvtScan<<"  "<<_weight<<endl;
+//cout << "taking from bin " << xb << "." << yb << endl;
   }
 
   if(_sampleName.find(s)==string::npos) return false;
-  _weight *= _dbm->getDBValue("T1ttttXsect",M1)*2110/_nProcEvtScan;
+  _weight *= _dbm->getDBValue("T1ttttXsect",M1)/_nProcEvtScan; // CH: lumi reweighting in display
+  //_weight *= _dbm->getDBValue("T1ttttXsect",M1)*2110/_nProcEvtScan;
   return true;
 }
 

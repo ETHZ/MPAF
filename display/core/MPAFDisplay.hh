@@ -28,7 +28,6 @@ struct CatId{
   string ext;
   string uncTag;
   int upVar;
-
 };
 
 struct ValId{

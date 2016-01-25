@@ -134,7 +134,7 @@ public:
     up =  simpleCut<T>( valUp, valcut, type, seccut);
     down =  simpleCut<T>( valDo, valcut, type, seccut);
     
-    //setSystematics( ds, cName, _uncSrc, up, down, w);
+    //setSystematics( ids, cName, _uncSrc, up, down, w);
     
     return mean;
   };

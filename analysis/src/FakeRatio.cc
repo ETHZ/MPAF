@@ -399,7 +399,6 @@ void FakeRatio::loadLeptonId(){
 //____________________________________________________________________________
 void FakeRatio::run(){
 
-
   _TR_lines.clear();
   _exts    .clear();
   _trws    .clear();
@@ -2171,19 +2170,14 @@ bool FakeRatio::ucsxEwkSelection(){
 bool FakeRatio::mrSelection(){
   // CH: fake ratio measurement for RA5 sync exercise May 2015
 
-
   // MET 
   if(!makeCut<float>( _met -> pt(), 20.0, "<", "MET selection"   )) return false;
-
 
   // MT
   float MT = _susyMod -> Mt(_denLeps[0], _met, _denLepsIdx[0].first, -1, _denLepsIdx[0].second, "", (std::abs(_denLeps[0]->pdgId()) == 13?SusyModule::kMedium : SusyModule::kTight));
   if(!makeCut<float>( MT          , 20.0, "<", "coneMT selection")) return false;
 
-
-
-
-return true;
+  return true;
 }
 
 

@@ -156,34 +156,35 @@ void MPAF::analyze(){
       // get tree entry, i.e. load branches
       _vc->setEvent(_ie);
       if(_skim&&_fullSkim)
-	_datasets[i]->getTree()->GetEntry(_ie);
+        _datasets[i]->getTree()->GetEntry(_ie);
 
       // get event weight, PU reweight it if needed 
       modifyWeight();
       
       // do something at every entry	
       run();
+
       //alternate workflows for uncertainty sources
-	for(size_t iu=0;iu<_uncSrcs.size();iu++) {
-	  //update the workflow
-	  _curWF = -100;
-	  _weight = _wBack;
-	  modifyWeight();
-	  if(iu==0) _vc->nextEvent();
-	  else _vc->sameEvent();
-	  _uncId = true;
-	  _unc = _uncSrcs[iu];
-	  _uDir = _uncDirs[iu];
-	  string dir = (_uDir==SystUtils::kUp)?"Up":"Do";
-	  //very ugly...
-	  // _curWF = _au->getUncWorkflow("Unc"+_unc+dir);
-	  //_offsetWF=_au->getUncWorkflow("Unc"+_unc+dir);
-	  _au->setCurrentWorkflow(_curWF);
-	  _au->setUncSrc(_unc, _uDir );
-	  applySystVar( _vc->_su->getSystInfos(_unc, _uDir) );
-	  run();
-	  _vc->backPortAllVars();
-	}
+	  for(size_t iu=0;iu<_uncSrcs.size();iu++) {
+	    //update the workflow
+	    _curWF = -100;
+	    _weight = _wBack;
+	    modifyWeight();
+	    if(iu==0) _vc->nextEvent();
+	    else _vc->sameEvent();
+	    _uncId = true;
+	    _unc = _uncSrcs[iu];
+	    _uDir = _uncDirs[iu];
+	    string dir = (_uDir==SystUtils::kUp)?"Up":"Do";
+	    //very ugly...
+	    // _curWF = _au->getUncWorkflow("Unc"+_unc+dir);
+	    //_offsetWF=_au->getUncWorkflow("Unc"+_unc+dir);
+	    _au->setCurrentWorkflow(_curWF);
+	    _au->setUncSrc(_unc, _uDir );
+	    applySystVar( _vc->_su->getSystInfos(_unc, _uDir) );
+	    run();
+	    _vc->backPortAllVars();
+	  }
 
       //destroy old Candidate pointers ======
       Candidate::reset();
