@@ -89,21 +89,25 @@ private:
     bool _selectMuons;
     bool _selectElectrons;
     bool _selectTaus;
-    bool _onZ; 
+    int _onZ; 
     bool _doPlots;
     bool _doValidationPlots;
+    int _closureByFlavor;
+    bool _exactlyThreeLep;
+    bool _runSystematics;
     string _BR;
     string _SR;
     string _FR;
     int _fastSim;
+    bool _debug;
 
 
 private:
 
     //counter categories, 0 is ALWAYS global (even if not specified later)
   enum {kGlobal=0,
-    
-	kOnZSR001, kOnZSR002, kOnZSR003, kOnZSR004, kOnZSR005, kOnZSR006, kOnZSR007, kOnZSR008,
+	
+    kOnZSR001, kOnZSR002, kOnZSR003, kOnZSR004, kOnZSR005, kOnZSR006, kOnZSR007, kOnZSR008,
 	kOnZSR009, kOnZSR010, kOnZSR011, kOnZSR012, kOnZSR013, kOnZSR014, kOnZSR015,
 
 	kOffZSR001, kOffZSR002, kOffZSR003, kOffZSR004, kOffZSR005, kOffZSR006, kOffZSR007, kOffZSR008,
@@ -115,7 +119,11 @@ private:
 	kOffZSR001_Fake, kOffZSR002_Fake, kOffZSR003_Fake, kOffZSR004_Fake, kOffZSR005_Fake, kOffZSR006_Fake, kOffZSR007_Fake, kOffZSR008_Fake,
 	kOffZSR009_Fake, kOffZSR010_Fake, kOffZSR011_Fake, kOffZSR012_Fake, kOffZSR013_Fake, kOffZSR014_Fake, kOffZSR015_Fake,
 
-    kGlobalFake,
+    kOnZBaseline, kOffZBaseline,
+
+    kOnZBaseline_Fake, kOffZBaseline_Fake,
+    
+    kGlobal_Fake,
     
     kWZCR
     };
@@ -176,6 +184,8 @@ private:
     std::vector<std::pair<std::string, unsigned int> >  _lepJetsIdx;
 
     //length of candiate vectors
+    int _nEls;
+    int _nMus;
     float _nTaus;
     float _nJets;
     float _nBJets;
@@ -206,7 +216,7 @@ private:
     Candidate* _l1Cand;
     Candidate* _l2Cand;
     
-  bool _isOnZ;
+  	bool _isOnZ;
 
     float _HT;
     float _MT2;
@@ -216,8 +226,6 @@ private:
     float _MT;
     float _zMass;
     float _zPt;
-    int _nEls;
-    int _nMus;
     int _idxL1;
     int _idxL2;
  
@@ -235,6 +243,7 @@ private:
     bool _categorization;
     bool _isMultiLep = false;
     bool _isFake = false;
+    int _flavor = -1;
 
     //for fake background
     vector<CandList> _combList;
@@ -245,9 +254,9 @@ private:
     map< std::pair<int,std::pair<int,unsigned long int> > , unsigned int > _filteredCSCEvents;
     map< std::pair<int,std::pair<int,unsigned long int> > , unsigned int > _filteredEESCEvents;
 
-  //scan =======
-  TH3D* _hScanWeight;
-  int _nProcEvtScan;
+  	//scan
+  	TH3D* _hScanWeight;
+  	int _nProcEvtScan;
 
 };
 
