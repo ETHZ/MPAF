@@ -12,7 +12,9 @@ SSDL2015::SSDL2015(std::string cfg){
 }
 
 SSDL2015::~SSDL2015(){
- 
+  if(_dumpEvents) {
+    _ofileDump->close();
+  }
 }
 
 void
@@ -28,11 +30,11 @@ SSDL2015::initialize(){
   _vTR_lines_non_em.push_back("HLT_BIT_HLT_Mu8_Ele8_CaloIdM_TrackIdM_Mass8_PFHT300_v");
   _vTR_lines_non_mm.push_back("HLT_BIT_HLT_DoubleMu8_Mass8_PFHT300_v");
 
-  _vTR_lines_iso_ee.push_back("HLT_BIT_HLT_Ele17_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v");  
-  _vTR_lines_iso_em.push_back("HLT_BIT_HLT_Mu8_TrkIsoVVL_Ele17_CaloIdL_TrackIdL_IsoVL_v");
-  _vTR_lines_iso_em.push_back("HLT_BIT_HLT_Mu17_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v");  
+  _vTR_lines_iso_ee.push_back("HLT_BIT_HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v");  
+  _vTR_lines_iso_em.push_back("HLT_BIT_HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_v");
+  _vTR_lines_iso_em.push_back("HLT_BIT_HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_v");  
   _vTR_lines_iso_mm.push_back("HLT_BIT_HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v");
-  _vTR_lines_iso_mm.push_back("HLT_BIT_HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v");
+  //_vTR_lines_iso_mm.push_back("HLT_BIT_HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v");
 
   registerTriggerVars();
 
@@ -59,10 +61,12 @@ SSDL2015::initialize(){
   _vc->registerVar("nLepGood"                     );
   _vc->registerVar("LepGood_pt"                   );
   _vc->registerVar("LepGood_eta"                  );
+  _vc->registerVar("LepGood_etaSc"                );
   _vc->registerVar("LepGood_phi"                  );
   _vc->registerVar("LepGood_charge"               );
   _vc->registerVar("LepGood_tightCharge"          );
   _vc->registerVar("LepGood_mediumMuonId"         );
+  _vc->registerVar("LepGood_mediumMuonId2016"     );
   _vc->registerVar("LepGood_mvaIdSpring15"        );
   _vc->registerVar("LepGood_pdgId"                );
   _vc->registerVar("LepGood_relIso03"             );
@@ -81,6 +85,7 @@ SSDL2015::initialize(){
   _vc->registerVar("LepGood_mvaSusy"              );
   _vc->registerVar("LepGood_mcMatchId"            );
   _vc->registerVar("LepGood_mcMatchPdgId"         );
+  _vc->registerVar("LepGood_mcUCSXMatchId"        );
   _vc->registerVar("LepGood_mcMatchAny"           );
   _vc->registerVar("LepGood_sigmaIEtaIEta"        );
   _vc->registerVar("LepGood_dEtaScTrkIn"          );
@@ -191,19 +196,21 @@ SSDL2015::initialize(){
 
   _susyMod = new SusyModule(_vc, _dbm);
   
-  int nCateg=237; //n*(1+78) + 1  
+  int nCateg=243; //n*(1+78) + 1  
   _categs.resize(nCateg);
-  string srs[237]={ 
+  string srs[243]={ 
 
     "HH SR1", "HH SR2", "HH SR3", "HH SR4", "HH SR5", "HH SR6", "HH SR7", "HH SR8",
     "HH SR9", "HH SR10", "HH SR11", "HH SR12", "HH SR13", "HH SR14", "HH SR15", "HH SR16",
     "HH SR17", "HH SR18", "HH SR19", "HH SR20", "HH SR21", "HH SR22", "HH SR23", "HH SR24",
     "HH SR25", "HH SR26", "HH SR27", "HH SR28", "HH SR29", "HH SR30", "HH SR31", "HH SR32",
+    "HH SR33",
     
     "HL SR1", "HL SR2", "HL SR3", "HL SR4", "HL SR5", "HL SR6", "HL SR7", "HL SR8",
     "HL SR9", "HL SR10", "HL SR11", "HL SR12", "HL SR13", "HL SR14", "HL SR15", "HL SR16",
     "HL SR17", "HL SR18", "HL SR19", "HL SR20", "HL SR21", "HL SR22", "HL SR23", "HL SR24",
-    "HL SR25","HL SR26",
+    "HL SR25","HL SR26", "HL SR27",
+
     
     "LL SR1", "LL SR2", "LL SR3", "LL SR4", "LL SR5", "LL SR6", "LL SR7", "LL SR8",
 
@@ -220,11 +227,12 @@ SSDL2015::initialize(){
     "HH SR9_Fake", "HH SR10_Fake", "HH SR11_Fake", "HH SR12_Fake", "HH SR13_Fake", "HH SR14_Fake", "HH SR15_Fake", "HH SR16_Fake",
     "HH SR17_Fake", "HH SR18_Fake", "HH SR19_Fake", "HH SR20_Fake", "HH SR21_Fake", "HH SR22_Fake", "HH SR23_Fake", "HH SR24_Fake",
     "HH SR25_Fake", "HH SR26_Fake", "HH SR27_Fake", "HH SR28_Fake", "HH SR29_Fake", "HH SR30_Fake", "HH SR31_Fake", "HH SR32_Fake",
+    "HH SR33_Fake",
     
     "HL SR1_Fake", "HL SR2_Fake", "HL SR3_Fake", "HL SR4_Fake", "HL SR5_Fake", "HL SR6_Fake", "HL SR7_Fake", "HL SR8_Fake",
     "HL SR9_Fake", "HL SR10_Fake", "HL SR11_Fake", "HL SR12_Fake", "HL SR13_Fake", "HL SR14_Fake", "HL SR15_Fake", "HL SR16_Fake",
     "HL SR17_Fake", "HL SR18_Fake", "HL SR19_Fake", "HL SR20_Fake", "HL SR21_Fake", "HL SR22_Fake", "HL SR23_Fake", "HL SR24_Fake",
-    "HL SR25_Fake","HL SR26_Fake",
+    "HL SR25_Fake", "HL SR26_Fake", "HL SR27_Fake",
     
     "LL SR1_Fake", "LL SR2_Fake", "LL SR3_Fake", "LL SR4_Fake", "LL SR5_Fake", "LL SR6_Fake", "LL SR7_Fake", "LL SR8_Fake",
 
@@ -242,11 +250,12 @@ SSDL2015::initialize(){
     "HH SR9_mId", "HH SR10_mId", "HH SR11_mId", "HH SR12_mId", "HH SR13_mId", "HH SR14_mId", "HH SR15_mId", "HH SR16_mId",
     "HH SR17_mId", "HH SR18_mId", "HH SR19_mId", "HH SR20_mId", "HH SR21_mId", "HH SR22_mId", "HH SR23_mId", "HH SR24_mId",
     "HH SR25_mId", "HH SR26_mId", "HH SR27_mId", "HH SR28_mId", "HH SR29_mId", "HH SR30_mId", "HH SR31_mId", "HH SR32_mId",
+    "HH SR33_mId",
     
     "HL SR1_mId", "HL SR2_mId", "HL SR3_mId", "HL SR4_mId", "HL SR5_mId", "HL SR6_mId", "HL SR7_mId", "HL SR8_mId",
     "HL SR9_mId", "HL SR10_mId", "HL SR11_mId", "HL SR12_mId", "HL SR13_mId", "HL SR14_mId", "HL SR15_mId", "HL SR16_mId",
     "HL SR17_mId", "HL SR18_mId", "HL SR19_mId", "HL SR20_mId", "HL SR21_mId", "HL SR22_mId", "HL SR23_mId", "HL SR24_mId",
-    "HL SR25_mId","HL SR26_mId",
+    "HL SR25_mId", "HL SR26_mId", "HL SR27_mId",
     
     "LL SR1_mId", "LL SR2_mId", "LL SR3_mId", "LL SR4_mId", "LL SR5_mId", "LL SR6_mId", "LL SR7_mId", "LL SR8_mId",
 
@@ -280,61 +289,85 @@ SSDL2015::initialize(){
   _fastSim           = getCfgVarI("FastSim"        , 0      );
   _lepflav           = getCfgVarS("LEPFLAV"        , "all"  );
   _leppt             = getCfgVarS("LEPPT"          , "all"  );
-  _SR                = getCfgVarS("SR"             , "BR02H");
+  _SR                = getCfgVarS("SR"             , ""     );
   _FR                = getCfgVarS("FR"             , "FO2C" );
+  _runMax            = getCfgVarI("runMax"         , 1000000000 );
   _LHESYS            = getCfgVarI("LHESYS"         , 0      );
   _categorization    = getCfgVarI("categorization" , 1      );
   _mergeSRs          = getCfgVarI("mergeSRs"       , 0      );
   _DoValidationPlots = getCfgVarI("ValidationPlots", 0      );
-
-  //vector<string> jess;
-  // jess.push_back("Jet_pt");
-  //addSystSource("JES",SystUtils::kNone, "%", jess, "JESUncer25nsV5_MC.db:abs(Jet_eta):Jet_pt", "" );
+  _computeSystematics = getCfgVarI("computeSystematics", 0      );
+  _onlyMainSR        = getCfgVarI("onlyMainSR"     , 0      );
+  _dumpEvents        = getCfgVarI("dumpEvents"     , 0      );
   
-  _dbm->loadDb("jes","JESUncer25nsV5_MC.db");
+  if(_skim) _computeSystematics=false;
 
-   addManualSystSource("EWKFR",SystUtils::kNone);
-   //addManualSystSource("Eff",SystUtils::kNone);
-   //addManualSystSource("Theory",SystUtils::kNone);
-   addManualSystSource("JES",SystUtils::kNone);
-   addManualSystSource("BTAG",SystUtils::kNone);
-   addManualSystSource("BTAGFS",SystUtils::kNone);
-   addManualSystSource("LepEffFS",SystUtils::kNone);
-   addManualSystSource("ISR",SystUtils::kNone);
+  if(_dumpEvents) {
+    _ofileDump=new ofstream("eventDump.txt", ios::out | ios::trunc );
+  }
+
+  if(_computeSystematics) {
+    //_dbm->loadDb("jes","JESUncer25nsV5_MC.db");
+    addManualSystSource("EWKFR",SystUtils::kNone);
+    //addManualSystSource("Eff",SystUtils::kNone);
+    addManualSystSource("pileup",SystUtils::kNone);
+    addManualSystSource("Theory",SystUtils::kNone);
+    addManualSystSource("JES",SystUtils::kNone);
+    addManualSystSource("BTAG",SystUtils::kNone);
+    addManualSystSource("BTAGFS",SystUtils::kNone);
+    addManualSystSource("LepEffFS",SystUtils::kNone);
+    addManualSystSource("ISR",SystUtils::kNone);
+  }
+
+  vector<float> AccTTV({
+      0.05, 0.05, 0.05, 0.4, 0.05, 0.4, 0.05, 0.05,
+	0.05, 0.05, 0.05, 0.4, 0.05, 0.4, 0.05, 0.05,
+	0.05, 0.05, 0.05, 0.4, 0.05, 0.4, 0.05, 0.05,
+	0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 1.0, 0.05,
+	1.0,
+	
+	0.05, 0.05, 0.05, 0.4, 0.05, 0.4, 0.05, 0.05,
+	0.05, 0.4, 0.05, 0.4, 0.05, 0.05, 0.05, 0.4,
+	0.05, 0.4, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05,
+	1.0, 0.05, 1.0,
+	
+	0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1	});
+  _theoryTTV = AccTTV;
+  // float theory=0;
+  // for(size_t ic=0;ic<66/*categs.size()*/;ic++) {
+  //   _theoryTTV.push_back(sqrt(pow(AccTTV[ic],2) + pow(0.11, 2) ) );
+  // }
 
   //FR databases
   if(_FR=="FO2C") {
-    _dbm->loadDb("ElNIso"    , "FR_Nov2.root", "FRElPtCorr_UCSX_non");
-    _dbm->loadDb("MuNIso"    , "FR_Nov2.root", "FRMuPtCorr_UCSX_non");
-    _dbm->loadDb("ElIso"     , "FR_Nov2.root", "FRElPtCorr_UCSX_iso");
-    _dbm->loadDb("MuIso"     , "FR_Nov2.root", "FRMuPtCorr_UCSX_iso");
+    _dbm->loadDb("ElNIso"    , "FakeRatio2016_ETH.root", "MR_RatElMapPtCorr_non/datacorrUCSX");
+    _dbm->loadDb("MuNIso"    , "FakeRatio2016_ETH.root", "MR_RatMuMapPtCorr_non/datacorrUCSX");
+    _dbm->loadDb("ElNIsoUp"  , "FakeRatio2016_ETH.root", "MR_RatElMapPtCorrHI_non/datacorrUCSX");
+    _dbm->loadDb("MuNIsoUp"  , "FakeRatio2016_ETH.root", "MR_RatMuMapPtCorrHI_non/datacorrUCSX");
+    _dbm->loadDb("ElNIsoDo"  , "FakeRatio2016_ETH.root", "MR_RatElMapPtCorrLO_non/datacorrUCSX");
+    _dbm->loadDb("MuNIsoDo"  , "FakeRatio2016_ETH.root", "MR_RatMuMapPtCorrLO_non/datacorrUCSX");
 
-    _dbm->loadDb("ElNIsoMC"  , "FR_Nov2.root", "FRElPtCorr_qcd_non");
-    _dbm->loadDb("MuNIsoMC"  , "FR_Nov2.root", "FRMuPtCorr_qcd_non");
-    _dbm->loadDb("ElIsoMC"   , "FR_Nov2.root", "FRElPtCorr_qcd_iso");
-    _dbm->loadDb("MuIsoMC"   , "FR_Nov2.root", "FRMuPtCorr_qcd_iso");
-
-    _dbm->loadDb("ElNIsoUp"  , "FR_Nov2.root", "FRElPtCorr_UCSX_HI_non");
-    _dbm->loadDb("MuNIsoUp"  , "FR_Nov2.root", "FRMuPtCorr_UCSX_HI_non");
-    _dbm->loadDb("ElIsoUp"   , "FR_Nov2.root", "FRElPtCorr_UCSX_HI_iso");
-    _dbm->loadDb("MuIsoUp"   , "FR_Nov2.root", "FRMuPtCorr_UCSX_HI_iso");
-    
-    _dbm->loadDb("ElNIsoMCUp", "FR_Nov2.root", "FRElPtCorr_qcd_non");
-    _dbm->loadDb("MuNIsoMCUp", "FR_Nov2.root", "FRMuPtCorr_qcd_non");
-    _dbm->loadDb("ElIsoMCUp" , "FR_Nov2.root", "FRElPtCorr_qcd_iso");
-    _dbm->loadDb("MuIsoMCUp" , "FR_Nov2.root", "FRMuPtCorr_qcd_iso");
-    
-    _dbm->loadDb("ElNIsoDo"  , "FR_Nov2.root", "FRElPtCorr_UCSX_LO_non");
-    _dbm->loadDb("MuNIsoDo"  , "FR_Nov2.root", "FRMuPtCorr_UCSX_LO_non");
-    _dbm->loadDb("ElIsoDo"   , "FR_Nov2.root", "FRElPtCorr_UCSX_LO_iso");
-    _dbm->loadDb("MuIsoDo"   , "FR_Nov2.root", "FRMuPtCorr_UCSX_LO_iso");
-
-    _dbm->loadDb("ElNIsoMCDo", "FR_Nov2.root", "FRElPtCorr_qcd_non");
-    _dbm->loadDb("MuNIsoMCDo", "FR_Nov2.root", "FRMuPtCorr_qcd_non");
-    _dbm->loadDb("ElIsoMCDo" , "FR_Nov2.root", "FRElPtCorr_qcd_iso");
-    _dbm->loadDb("MuIsoMCDo" , "FR_Nov2.root", "FRMuPtCorr_qcd_iso");
+    _dbm->loadDb("ElIso"    , "FakeRatio2016_ETH.root", "MR_RatElMapPtCorr_iso/datacorrUCSX");
+    _dbm->loadDb("MuIso"    , "FakeRatio2016_ETH.root", "MR_RatMuMapPtCorr_iso/datacorrUCSX");
+    _dbm->loadDb("ElIsoUp"  , "FakeRatio2016_ETH.root", "MR_RatElMapPtCorrHI_iso/datacorrUCSX");
+    _dbm->loadDb("MuIsoUp"  , "FakeRatio2016_ETH.root", "MR_RatMuMapPtCorrHI_iso/datacorrUCSX");
+    _dbm->loadDb("ElIsoDo"  , "FakeRatio2016_ETH.root", "MR_RatElMapPtCorrLO_iso/datacorrUCSX");
+    _dbm->loadDb("MuIsoDo"  , "FakeRatio2016_ETH.root", "MR_RatMuMapPtCorrLO_iso/datacorrUCSX");
 
 
+    _dbm->loadDb("ElNIsoMC"    , "FakeRatio2016_ETH.root", "MR_RatElMapPtCorr_non/datacorrUCSX");
+    _dbm->loadDb("MuNIsoMC"    , "FakeRatio2016_ETH.root", "MR_RatMuMapPtCorr_non/datacorrUCSX");
+    _dbm->loadDb("ElNIsoMCUp"  , "FakeRatio2016_ETH.root", "MR_RatElMapPtCorrHI_non/datacorrUCSX");
+    _dbm->loadDb("MuNIsoMCUp"  , "FakeRatio2016_ETH.root", "MR_RatMuMapPtCorrHI_non/datacorrUCSX");
+    _dbm->loadDb("ElNIsoMCDo"  , "FakeRatio2016_ETH.root", "MR_RatElMapPtCorrLO_non/datacorrUCSX");
+    _dbm->loadDb("MuNIsoMCDo"  , "FakeRatio2016_ETH.root", "MR_RatMuMapPtCorrLO_non/datacorrUCSX");
+
+    _dbm->loadDb("ElIsoMC"    , "FakeRatio2016_ETH.root", "MR_RatElMapPtCorr_iso/datacorrUCSX");
+    _dbm->loadDb("MuIsoMC"    , "FakeRatio2016_ETH.root", "MR_RatMuMapPtCorr_iso/datacorrUCSX");
+    _dbm->loadDb("ElIsoMCUp"  , "FakeRatio2016_ETH.root", "MR_RatElMapPtCorrHI_iso/datacorrUCSX");
+    _dbm->loadDb("MuIsoMCUp"  , "FakeRatio2016_ETH.root", "MR_RatMuMapPtCorrHI_iso/datacorrUCSX");
+    _dbm->loadDb("ElIsoMCDo"  , "FakeRatio2016_ETH.root", "MR_RatElMapPtCorrLO_iso/datacorrUCSX");
+    _dbm->loadDb("MuIsoMCDo"  , "FakeRatio2016_ETH.root", "MR_RatMuMapPtCorrLO_iso/datacorrUCSX");
   }
   if(_FR=="FO4C") {
     _dbm->loadDb("El","MaySync/CH_FRFile_090615.root","tt/nosel/FRISisofo4RElPtMIso2");
@@ -342,8 +375,8 @@ SSDL2015::initialize(){
   }
 
   //chargeflip DB
-  _dbm->loadDb("chargeMId"  , "flipMapUCSX.root", "flipMapUCSX");
-  _dbm->loadDb("chargeMIdMC", "flipMapUCSX.root", "flipMapUCSX");
+  _dbm->loadDb("chargeMId"  , "chargeMId_80X_2016.root", "elChMId");
+  _dbm->loadDb("chargeMIdMC", "chargeMId_80X_2016.root", "elChMId");
   
   // SF DB
   _dbm->loadDb("hltSF"      , "hltSF.db"                                           ); 
@@ -357,7 +390,9 @@ SSDL2015::initialize(){
   _dbm->loadDb("FastSimMuSF", "sf_mu_mediumID_multi.root"        , "histo3D");
 
   //pileup
-   _dbm->loadDb("puWeights","pileupWeights.root","pileup");
+   _dbm->loadDb("puWeights","puWeights_4fb.root","puw");
+   _dbm->loadDb("puWeightsUp","puWeights_4fb_Up.root","puw");
+   _dbm->loadDb("puWeightsDown","puWeights_4fb_Down.root","puw");
 
 
   //=== signal Xsection, easier to normalize from here.
@@ -375,15 +410,24 @@ SSDL2015::initialize(){
 
 void
 SSDL2015::modifyWeight() {
-
-  if (_vc->get("isData") != 1) {
+  
+  _isData = _vc->get("isData");
+  if (!_isData) {
     //generator weights
     if (_LHESYS == 0) {_weight *= _vc->get("genWeight");}
     else {_weight *= _susyMod->getLHEweight(_LHESYS);}
     //pileup weights
     //_weight *= _vc->get("vtxWeight");
     //_weight *= _susyMod->getPuWeight( _vc->get("nVert") );
-    _weight *= _dbm->getDBValue("puWeights", _vc->get("nTrueInt") );
+    if(!isInUncProc())
+      _weight *= _dbm->getDBValue("puWeights", _vc->get("nTrueInt") );
+    else if(isInUncProc() && getUncName()=="pileup" && getUncDir()==SystUtils::kUp )
+      _weight *= _dbm->getDBValue("puWeightsUp", _vc->get("nTrueInt") );
+    else if(isInUncProc() && getUncName()=="pileup" && getUncDir()==SystUtils::kDown )
+      _weight *= _dbm->getDBValue("puWeightsDown", _vc->get("nTrueInt") );
+    else
+      _weight *= _dbm->getDBValue("puWeights", _vc->get("nTrueInt") );
+
   }
 
 }
@@ -399,19 +443,20 @@ SSDL2015::defineOutput() {
   ///////////////////////////////////////////////////////////////////////////
   // GLOBAL PLOTS:  These plots are drawn for every SR
   ///////////////////////////////////////////////////////////////////////////
-  _hm->addVariable("l1Pt"  , 150, 0.,  150, "p_{T}(l_{1}) [GeV]"                 );
-  _hm->addVariable("l2Pt"  , 150, 0.,  150, "p_{T}(l_{2}) [GeV]"                 );
-  _hm->addVariable("MET"   , 500, 0. , 500, "#slash{E}_{T} [GeV]"                );
-  _hm->addVariable("HT"    , 800, 0. , 800, "H_{T} [GeV]"                        );
-  _hm->addVariable("MT"    , 200, 0. , 200, "min(M_{T,1}, M_{T,2}) [GeV]"        );
-  _hm->addVariable("NBJets",   8,-0.5, 7.5, "N_{b-jets} (p_{T} > 25 GeV, medium)");
-  _hm->addVariable("NJets" ,   8,-0.5, 7.5, "N_{jets} (p_{T} > 40 GeV)"          );
 
-  _hm->addVariable("mass" ,   200,0, 200, "m_{ll} [GeV]"  );
+  //if(_SR!="") {
+  _hm->addVariable("l1Pt"  , 150, 0.,  150, "p_{T}(l_{1}) [GeV] "                 , _SR!="");
+  _hm->addVariable("l2Pt"  , 150, 0.,  150, "p_{T}(l_{2}) [GeV] "                 , _SR!="");
+  _hm->addVariable("MET"   , 500, 0. , 500, "#slash{E}_{T} [GeV] "                , _SR!="");
+  _hm->addVariable("HT"    , 2000, 0. , 2000, "H_{T} [GeV]"                       , _SR!="");
+  _hm->addVariable("MT"    , 200, 0. , 200, "min(M_{T,1}, M_{T,2}) [GeV] "        , _SR!="");
+  _hm->addVariable("NBJets", 8,-0.5, 7.5, "N_{b-jets} (p_{T} > 25 GeV, medium) "  , _SR!="");
+  _hm->addVariable("NJets" , 8,-0.5, 7.5, "N_{jets} (p_{T} > 40 GeV) "            , _SR!="");
+  _hm->addVariable("mass" ,  200,0, 200, "m_{ll} [GeV] "                          , _SR!="");
   
-  _hm->addVariable("HHSR", 32,1,33, "HH SR");
-  _hm->addVariable("HLSR", 26,1,27, "HL SR");
-  _hm->addVariable("LLSR", 8,1,9, "LL SR");
+  _hm->addVariable("HHSR", 33,1,34, "HH SR ");
+  _hm->addVariable("HLSR", 27,1,28, "HL SR ");
+  _hm->addVariable("LLSR", 8,1,9, "LL SR ");
 
   if(!_DoValidationPlots) return; 
   ///////////////////////////////////////////////////////////////////////////
@@ -426,23 +471,23 @@ SSDL2015::defineOutput() {
   
   for (size_t r=0; r<reg.size(); r++) {
     // lepton variables
-    _hm->addVariable(reg[r]+"_lep1_jetPtRatio", 100, 0., 1.2, "Leading Lepton Jet p_{T} Ratio [GeV]", false);
-    _hm->addVariable(reg[r]+"_lep1_jetPtRel"  , 100, 0., 40., "Leading Lepton Jet p_{T} Rel   [GeV]", false);
-    _hm->addVariable(reg[r]+"_lep1_miniRelIso", 100, 0., 0.4, "Leading Lepton Isolation", false);
-    _hm->addVariable(reg[r]+"_lep1_Pt"        , 100, 0., 100, "Leading Lepton p_{T} [GeV]", false);
-    _hm->addVariable(reg[r]+"_lep1_Eta"       , 100, 0., 2.5, "Leading Lepton #eta", false);
-    _hm->addVariable(reg[r]+"_lep1_SIP3D"     , 100, 0., 5.0, "Leading Lepton SIP_{3D}", false);
-    _hm->addVariable(reg[r]+"_lep2_jetPtRatio", 100, 0., 1.2, "Subleading Lepton Jet p_{T} Ratio [GeV]", false);
-    _hm->addVariable(reg[r]+"_lep2_jetPtRel"  , 100, 0., 40., "Subleading Lepton Jet p_{T} Rel   [GeV]", false);
-    _hm->addVariable(reg[r]+"_lep2_miniRelIso", 100, 0., 0.4, "Subleading Lepton Isolation", false);
-    _hm->addVariable(reg[r]+"_lep2_Pt"        , 100, 0., 100, "Subleading Lepton p_{T} [GeV]", false);
-    _hm->addVariable(reg[r]+"_lep2_Eta"       , 100, 0., 2.5, "Subleading Lepton #eta", false);
-    _hm->addVariable(reg[r]+"_lep2_SIP3D"     , 100, 0., 5.0, "Subleading Lepton SIP_{3D}", false);
+    _hm->addVariable(reg[r]+"_lep1_jetPtRatio", 100, 0., 1.2, "p_{T}(l1)/p_{T}(j) [GeV] ", false);
+    _hm->addVariable(reg[r]+"_lep1_jetPtRel"  , 100, 0., 40., "p_{T}^{Rel}(l1)  [GeV] ", false);
+    _hm->addVariable(reg[r]+"_lep1_miniRelIso", 100, 0., 0.4, "mIso(l1) ", false);
+    _hm->addVariable(reg[r]+"_lep1_Pt"        , 100, 0., 100, "p_{T}(l1) [GeV] ", false);
+    _hm->addVariable(reg[r]+"_lep1_Eta"       , 100, 0., 2.5, "#eta(l1) ", false);
+    _hm->addVariable(reg[r]+"_lep1_SIP3D"     , 100, 0., 5.0, "SIP_{3D}(l1) ", false);
+    _hm->addVariable(reg[r]+"_lep2_jetPtRatio", 100, 0., 1.2, "p_{T}(l1)/p_{T}(j) [GeV] ", false);
+    _hm->addVariable(reg[r]+"_lep2_jetPtRel"  , 100, 0., 40., "p_{T}^{Rel}(l1) [GeV] ", false);
+    _hm->addVariable(reg[r]+"_lep2_miniRelIso", 100, 0., 0.4, "mIso(l2) ", false);
+    _hm->addVariable(reg[r]+"_lep2_Pt"        , 100, 0., 100, "p_{T}(l1) [GeV] ", false);
+    _hm->addVariable(reg[r]+"_lep2_Eta"       , 100, 0., 2.5, "#eta(l1) ", false);
+    _hm->addVariable(reg[r]+"_lep2_SIP3D"     , 100, 0., 5.0, "SIP_{3D}(l1) ", false);
     
     // event variables 
     _hm->addVariable(reg[r]+"_MET"            , 500, 0. , 500, "#slash{E}_{T} [GeV]", false);
     _hm->addVariable(reg[r]+"_htJet40j"       , 800, 0. , 800, "H_{T} [GeV]", false);
-    _hm->addVariable(reg[r]+"_mZ1"            , 300, 0. , 300, "best m_{l^{+}l^{-}} [GeV]", false);
+    _hm->addVariable(reg[r]+"_mZ"            , 300, 0. , 300, "M_{l^{+}l^{-}} [GeV]", false);
     _hm->addVariable(reg[r]+"_MTmin"          ,  20, 0. , 200, "min(M_{T,1}, M_{T,2}) [GeV]", false);
     _hm->addVariable(reg[r]+"_NBJetsLoose25"  ,   8,-0.5, 7.5, "N_{b-jets} (p_{T} > 25 GeV, loose)", false);
     _hm->addVariable(reg[r]+"_NBJetsMedium25" ,   8,-0.5, 7.5, "N_{b-jets} (p_{T} > 25 GeV, medium)", false);
@@ -463,11 +508,12 @@ SSDL2015::writeOutput() {
 
 void
 SSDL2015::run() {
-
-
+  //cout<<" uncertainty tag:"<<getUncName()<<"  "<<endl;
+  _skimmedEvt=false;
+  // if(_vc->get("run")!=273730) return;
+  // if(((unsigned long)_vc->get("evt"))!=575899944 ) return;
   if(_fastSim && !checkMassBenchmark() ) return;
-  
-  //if(_vc->get("isData") && !checkDoubleCount()) return;
+  if(_vc->get("isData") && !checkDoubleCount()) return;
 
   counter("denominator");
   if(!passNoiseFilters()) return;
@@ -494,8 +540,15 @@ SSDL2015::run() {
   }
   counter("SS like pair");
 
+  if(_skim) {
+    if(_allJets.size()<2) return; //two jets with pT>25 GeV
+    _skimmedEvt=true;
+    skimTrees();
+    return;
+  }
+  
   // BTAG SF
-  if(!_vc->get("isData") ) {
+  if(!_isData) {
     if(!isInUncProc())  {
       _btagW = _susyMod->bTagSF( _allJets, _allJetsIdx, _bJets, _bJetsIdx, 0, _fastSim, 0);
       //cout<<" --> "<<_btagW<<endl;
@@ -503,16 +556,16 @@ SSDL2015::run() {
     }
     else if(isInUncProc() && getUncName()=="BTAG" && getUncDir()==SystUtils::kUp )
       _weight *= _susyMod->bTagSF( _allJets, _allJetsIdx, _bJets,
-				   _bJetsIdx, 1, _fastSim); 
+  				   _bJetsIdx, 1, _fastSim); 
     else if(isInUncProc() && getUncName()=="BTAG" && getUncDir()==SystUtils::kDown )
       _weight *= _susyMod->bTagSF( _allJets, _allJetsIdx, _bJets,
-				   _bJetsIdx, -1, _fastSim); 
+  				   _bJetsIdx, -1, _fastSim); 
     else if(isInUncProc() && getUncName()=="BTAGFS" && getUncDir()==SystUtils::kUp )
       _weight *= _susyMod->bTagSF( _allJets, _allJetsIdx, _bJets,
-				   _bJetsIdx, 0, _fastSim, 1); 
+  				   _bJetsIdx, 0, _fastSim, 1); 
     else if(isInUncProc() && getUncName()=="BTAGFS" && getUncDir()==SystUtils::kDown )
       _weight *= _susyMod->bTagSF( _allJets, _allJetsIdx, _bJets,
-				   _bJetsIdx, 0, _fastSim, -1); 
+  				   _bJetsIdx, 0, _fastSim, -1); 
     else //other syst. variations
       _weight *= _btagW;
         
@@ -528,19 +581,23 @@ SSDL2015::run() {
     }
   }
 
-
-
    //===============================================
   if(!_isFake && !_isOS) {
+
+    //blinding
+    if(_vc->get("isData") && _vc->get("run")>_runMax) return;
+
     setWorkflow(kGlobal);
     counter("dispatching");
     advancedSelection( kGlobal );
   }
-  else {
-    
+  else if(!_onlyMainSR) {
+
     vector<float> frs=getFRs();
     int n=0;
     for(unsigned int ip=0;ip<_auxPairs.size();ip++) {
+      //if(_skim && _skimmedEvt) continue; //do not copy multiple events
+
       _l1Cand = _auxPairs[ip][0];
       _l2Cand = _auxPairs[ip][1];
       _idxL1 = _auxIdxs[ip][0];
@@ -587,19 +644,18 @@ SSDL2015::advancedSelection(int WF) {
   if(_lepflav=="em" && std::abs(_l1Cand->pdgId())==std::abs(_l2Cand->pdgId()) ) return;
   
   counter("ptflav");
-   Candidate* Z=Candidate::create(_l1Cand, _l2Cand);
+  Candidate* Z=Candidate::create(_l1Cand, _l2Cand);
   fill("mass",Z->mass(),_weight);
- 
-  if (_vc->get("isData") != 1) {
+  
+  if(!_isData) {
     if(!passGenSelection() ) return;
   }
   counter("genselection");
-  
   _flav=std::abs(_l1Cand->pdgId())+std::abs(_l2Cand->pdgId());
 
   //HLT variables wrong, use bits instead
   //if(!hltSelection() ) return;
-  if(!_fastSim) {
+  if(_isData) {  //!_fastSim
     if(!passHLTbit()) return;
   }
   counter("HLT");
@@ -637,7 +693,9 @@ SSDL2015::advancedSelection(int WF) {
   
   //default cuts for baseline
   if(_HT<80) return;
+  counter("HT selection");
   if( (_HT<500 && _metPt < 30) ) return;
+  counter("MET selection");
   if(_nJets<2) return;
   counter("std baseline");
   
@@ -655,12 +713,23 @@ SSDL2015::advancedSelection(int WF) {
     
     { //ugly.. store the yields per SR
       setWorkflow( ((offset==kBR30L)?kGlobalFake:((offset==0)?0:kGlobalmId)) );
+
+      //theory uncertainties
+      float xsec=(_sampleName.find("TTW")!=string::npos)?0.13:0.11;
+      if(!_isData) {
+	if(isInUncProc() && getUncName()=="Theory" && getUncDir()==SystUtils::kUp )
+	  _weight*=1+sqrt(pow(_theoryTTV[wf],2) + pow(xsec,2) );
+	if(isInUncProc() && getUncName()=="Theory" && getUncDir()==SystUtils::kDown )
+	  _weight*=1-sqrt(pow(_theoryTTV[wf],2) + pow(xsec,2) );
+      }
+
       if(wf<kSR1B) //HH
-	fill( "HHSR", wf , _weight );
+      	fill( "HHSR", wf , _weight );
       else if(wf<kSR1C) //HL
-	fill( "HLSR", wf-kSR32A, _weight );
+      	fill( "HLSR", wf-kSR33A, _weight );
       else if(wf<kBR00H) //LL
-	fill( "LLSR", wf-kSR26B , _weight );
+      	fill( "LLSR", wf-kSR27B , _weight );
+
     }    
 
     setWorkflow(wf+offset);
@@ -675,52 +744,7 @@ SSDL2015::advancedSelection(int WF) {
     fillhistos();//fill histos for SR and BR  (and the SR_Fake and BR_Fake)
   }
 
-  // if( getCurrentWorkflow()==0) return; //getCurrentWorkflow()==100 ||
-  // if( getCurrentWorkflow()>kSR32A 
-  //     && getCurrentWorkflow()!=kBR00H
-  //     && getCurrentWorkflow()!=kBR10H
-  //     && getCurrentWorkflow()!=kBR20H
-  //     && getCurrentWorkflow()!=kBR30H
-  //     ) return;
-  // int run=_vc->get("run");
-  // int lumi=_vc->get("lumi");
-  // double event=_vc->get("evt");
-  // int nLep = _looseLeps.size();//_looseLepsVeto.size();//_vc->get("nLepGood_Mini");
-  // // cout<<" <====> "<<_vc->get("nLepGood_Mini")<<"  "<<_looseLepsVeto.size()<<"  "<<_looseLeps.size()<<endl;
-  // int id1 = _l1Cand->pdgId();
-  // double pt1 = _l1Cand->pt();
-  // int id2 = _l2Cand->pdgId();
-  // double pt2 = _l2Cand->pt();
-  // int njet = _nJets;
-  // int nbjet = _nBJets;
-  // double met = _met->pt();
-  // double HT = _HT;
-  // int sr = ((getCurrentWorkflow()<kBR00H_Fake)?(getCurrentWorkflow()-offset):(0));
-
-  // if(getCurrentWorkflow()==kBR00H_Fake || getCurrentWorkflow()==kBR10H_Fake || getCurrentWorkflow()==kBR20H_Fake || getCurrentWorkflow()==kBR30H_Fake) sr=0;
- 
-  //if(_isFake && sr > 0) {
-  //if(WF == kGlobal && sr == 33) {
-  // cout << Form("%1d %9d %12.0f\t%2d\t%+2d %5.1f\t%+2d %5.1f\t%d\t%2d\t%5.1f\t%6.1f\t%2d\t%2.5f",
-  // 	       run, lumi, event, nLep,
-  // 	       id1, pt1, id2, pt2,
-  // 	       njet, nbjet, met, HT,
-  // 	       sr, _weight ) << endl;
-
-  //}
-
-  //if(_auxPairs.size()>=1 && offset==kBR30L_Fake) { // && _auxFlags[0]==kIsFake) {
-  //if(_auxPairs.size()==1 && _auxFlags[0]==kIsFake) {
-  // unsigned long int event=(unsigned long int )_vc->get("evt");
-  //   float lepPtT = _vc->get("LepGood_pt",_idxL1);
-  //   float lepPt = _vc->get("LepGood_pt",_idxL2);
-  //   float conePt = _l2Cand->pt();
-  //   float pTrel = _vc->get("LepGood_jetPtRelv2",_idxL2);
-  //   float jetPt = _susyMod->closestJetPt(_idxL2); //_vc->get("LepGood_jetRawPt",_idxL2)*_vc->get("LepGood_jetCorrFactor_L1L2L3Res",_idxL2);
-  //   float w = _weight;
-  //   cout<<Form("%1d\t%5.2f\t%5.2f\t%5.2f\t%5.2f\t%5.2f\t%5.5f\t",event,lepPtT, lepPt,conePt, pTrel, jetPt, w)<<_categs[getCurrentWorkflow()-offset-1]<<endl; 
-    //}
-
+  if(_dumpEvents) dumpEvents();
 
 }
 
@@ -1096,6 +1120,9 @@ SSDL2015::setSignalRegions() {
 
   string HThighBound="1125";
   string METhighBound="300";
+  string HTSuperhighBound="1300";
+  string METSuperhighBound="500";
+
 
   //HH-regions =============================================================
   //0b-jet =================================================================
@@ -1187,32 +1214,39 @@ SSDL2015::setSignalRegions() {
   
   //3b-jet =================================================================
   else if( _SR== "HH SR25" ) {
-    setSelLine("LL:=:hh|NB:>=:3|MT:<:120|MET:[]:50:200|NJ:>=:2|HT:<:300");
+    setSelLine("LL:=:hh|NB:>=:3|MT:<:120|MET:[]:50:300|NJ:>=:2|HT:<:300");
   }
   else if( _SR== "HH SR26" ) {
     setSelLine("LL:=:hh|NB:>=:3|MT:<:120|MET:[]:50:200|NJ:>=:2|HT:[]:300:"+HThighBound);
   }
+  // else if( _SR== "HH SR27" ) {
+  //   setSelLine("LL:=:hh|NB:>=:3|MT:<:120|MET:[]:200:"+METhighBound+"|NJ:>=:2|HT:<:300");
+  // }
   else if( _SR== "HH SR27" ) {
-    setSelLine("LL:=:hh|NB:>=:3|MT:<:120|MET:[]:200:"+METhighBound+"|NJ:>=:2|HT:<:300");
-  }
-  else if( _SR== "HH SR28" ) {
     setSelLine("LL:=:hh|NB:>=:3|MT:<:120|MET:[]:200:"+METhighBound+"|NJ:>=:2|HT:[]:300:"+HThighBound);
   }
-  else if( _SR== "HH SR29" ) {
+  else if( _SR== "HH SR28" ) {
     setSelLine("LL:=:hh|NB:>=:3|MT:>=:120|MET:[]:50:"+METhighBound+"|NJ:>=:2|HT:<:300");
   }
-  else if( _SR== "HH SR30" ) {
+  else if( _SR== "HH SR29" ) {
     setSelLine("LL:=:hh|NB:>=:3|MT:>=:120|MET:[]:50:"+METhighBound+"|NJ:>=:2|HT:[]:300:"+HThighBound);
   }
   
   //inclusive H-MET ==========================================================
-  else if( _SR== "HH SR31" ) {
-    setSelLine("LL:=:hh|MET:>=:300|NJ:>=:2|HT:>=:300"); //3 fb-1
+  else if( _SR== "HH SR30" ) {
+    setSelLine("LL:=:hh|MET:[]:"+METhighBound+":"+METSuperhighBound+"|NJ:>=:2|HT:>=:300"); //3 fb-1
+  }
+  else if( _SR== "HH SR32" ) {
+    setSelLine("LL:=:hh|MET:>:"+METSuperhighBound+"|NJ:>=:2|HT:>=:300"); //3 fb-1
   }
 
+
   //inclusive H-HT ==========================================================
-  else if( _SR== "HH SR32" ) {
-    setSelLine("LL:=:hh|MET:[]:50:"+METhighBound+"|NJ:>=:2|HT:>=:"+HThighBound); //3 fb-1
+  else if( _SR== "HH SR31" ) {
+    setSelLine("LL:=:hh|MET:[]:50:"+METhighBound+"|NJ:>=:2|HT:[]:"+HThighBound+":"+HTSuperhighBound); //3 fb-1
+  }
+  else if( _SR== "HH SR33" ) {
+    setSelLine("LL:=:hh|MET:[]:50:"+METhighBound+"|NJ:>=:2|HT:>=:"+HTSuperhighBound); //3 fb-1
   }
 
   
@@ -1282,35 +1316,54 @@ SSDL2015::setSignalRegions() {
 
   //3+b-jet =================================================================
   else if( _SR== "HL SR19" ) {
-    setSelLine("LL:=:hl|NB:>=:3|MT:<:120|MET:[]:50:200|NJ:>=:2|HT:<:300");
+    setSelLine("LL:=:hl|NB:>=:3|MT:<:120|MET:[]:50:300|NJ:>=:2|HT:<:300");
   }
   else if( _SR== "HL SR20" ) {
     setSelLine("LL:=:hl|NB:>=:3|MT:<:120|MET:[]:50:200|NJ:>=:2|HT:[]:300:"+HThighBound);
   }
+  // else if( _SR== "HL SR21" ) {
+  //   setSelLine("LL:=:hl|NB:>=:3|MT:<:120|MET:[]:200:"+METhighBound+"|NJ:>=:2|HT:<:300");
+  // }
   else if( _SR== "HL SR21" ) {
-    setSelLine("LL:=:hl|NB:>=:3|MT:<:120|MET:[]:200:"+METhighBound+"|NJ:>=:2|HT:<:300");
-  }
-  else if( _SR== "HL SR22" ) {
     setSelLine("LL:=:hl|NB:>=:3|MT:<:120|MET:[]:200:"+METhighBound+"|NJ:>=:2|HT:[]:300:"+HThighBound);
   }
 
   //inclusive H-MT =============================================================
-  else if( _SR== "HL SR23" ) {
+  else if( _SR== "HL SR22" ) {
     setSelLine("LL:=:hl|MT:>=:120|MET:[]:50:"+METhighBound+"|NJ:>=:2|HT:<:300");
   }
-  else if( _SR== "HL SR24" ) {
+  else if( _SR== "HL SR23" ) {
     setSelLine("LL:=:hl|MT:>=:120|MET:[]:50:"+METhighBound+"|NJ:>=:2|HT:[]:300:"+HThighBound);
   }
   
-  //inclusive H-MET ==========================================================
-  else if( _SR== "HL SR25" ) {
-    setSelLine("LL:=:hl|MET:>=:"+METhighBound+"|NJ:>=:2|HT:>=:300");
+  // //inclusive H-MET ==========================================================
+  // else if( _SR== "HL SR25" ) {
+  //   setSelLine("LL:=:hl|MET:>=:"+METhighBound+"|NJ:>=:2|HT:>=:300");
+  // }
+ 
+  // //inclusive H-HT ==========================================================
+  // else if( _SR== "HL SR26" ) {
+  //   setSelLine("LL:=:hl|MET:[]:50:"+METhighBound+"|NJ:>=:2|HT:>=:1125"); //3 fb-1
+  // }
+
+ //inclusive H-MET ==========================================================
+  else if( _SR== "HL SR24" ) {
+    setSelLine("LL:=:hl|MET:[]:"+METhighBound+":"+METSuperhighBound+"|NJ:>=:2|HT:>=:300"); //3 fb-1
   }
-  
-  //inclusive H-HT ==========================================================
   else if( _SR== "HL SR26" ) {
-    setSelLine("LL:=:hl|MET:[]:50:"+METhighBound+"|NJ:>=:2|HT:>=:1125"); //3 fb-1
+    setSelLine("LL:=:hl|MET:>:"+METSuperhighBound+"|NJ:>=:2|HT:>=:300"); //3 fb-1
   }
+
+
+  //inclusive H-HT ==========================================================
+  else if( _SR== "HL SR25" ) {
+    setSelLine("LL:=:hl|MET:[]:50:"+METhighBound+"|NJ:>=:2|HT:[]:"+HThighBound+":"+HTSuperhighBound); //3 fb-1
+  }
+  else if( _SR== "HL SR27" ) {
+    setSelLine("LL:=:hl|MET:[]:50:"+METhighBound+"|NJ:>=:2|HT:>=:"+HTSuperhighBound); //3 fb-1
+  }
+
+
 
 
   //LL-regions =============================================================
@@ -1503,26 +1556,45 @@ SSDL2015::genMatchCateg(const Candidate* cand) {
 bool
 SSDL2015::passGenSelection() {
 
-  if( _sampleName.find("WZTo3LNu")!=(size_t)-1){
-    if(_vc->get("LepGood_mcMatchId", _idxL1) != 0 && _vc->get("LepGood_mcMatchPdgId", _idxL1) == _vc->get("LepGood_pdgId", _idxL1) &&
-       _vc->get("LepGood_mcMatchId", _idxL2) != 0 && _vc->get("LepGood_mcMatchPdgId", _idxL2) == _vc->get("LepGood_pdgId", _idxL2)) return true;
-    else return false;
+  //cout<<_isFake<<"  "<<_isOS<<"  ===> "<<_vc->get("LepGood_mcUCSXMatchId", _idxL1)<<"   "<<_vc->get("LepGood_mcUCSXMatchId", _idxL2)<<endl;
+
+  if(!_isData && !_isOS && !_isFake && _sampleName.find("fakes")!=string::npos)  { // real fake in main SR
+    if( !(_vc->get("LepGood_mcUCSXMatchId", _idxL1)==2 || _vc->get("LepGood_mcUCSXMatchId", _idxL1)==3) &&
+	!(_vc->get("LepGood_mcUCSXMatchId", _idxL2)==2 || _vc->get("LepGood_mcUCSXMatchId", _idxL2)==3) ) return false;
+  }
+  if(!_isData && !_isOS && !_isFake && _sampleName.find("OS2l")!=string::npos) { // real charge flip in main SS
+    if( (_vc->get("LepGood_mcUCSXMatchId", _idxL1)!=1 && _vc->get("LepGood_mcUCSXMatchId", _idxL2)!=1) ) return false;
   }
 
+  if(!_isData && _isFake && _sampleName.find("fakes")!=string::npos) { // prompts in fake
+    if( (_vc->get("LepGood_mcUCSXMatchId", _idxL1)!=0 ||  _vc->get("LepGood_mcUCSXMatchId", _idxL2)!=0 ) ) return false;
+  }
+  if(!_isData && _isOS && _sampleName.find("OS2l")!=string::npos) { // prompts in OS
+    if( (_vc->get("LepGood_mcUCSXMatchId", _idxL1)!=0 || _vc->get("LepGood_mcUCSXMatchId", _idxL2)!=0 ) ) return false;
+  }
+  
+  //cout<<" youpiyou "<<endl;
 
-  if( _sampleName.find("DYJets")!=(size_t)-1 || _sampleName.find("TTJets")!=(size_t)-1 ) {
+  // if( _sampleName.find("WZTo3LNu")!=(size_t)-1){
+  //   if(_vc->get("LepGood_mcMatchId", _idxL1) != 0 && _vc->get("LepGood_mcMatchPdgId", _idxL1) == _vc->get("LepGood_pdgId", _idxL1) &&
+  //      _vc->get("LepGood_mcMatchId", _idxL2) != 0 && _vc->get("LepGood_mcMatchPdgId", _idxL2) == _vc->get("LepGood_pdgId", _idxL2)) return true;
+  //   else return false;
+  // }
+
+
+  // if( _sampleName.find("DYJets")!=(size_t)-1 || _sampleName.find("TTJets")!=(size_t)-1 ) {
     
-    if(_sampleName.find("charge")!=(size_t)-1) {
-      if( !genMatchedMisCharge() )
-	return false;
-    }
-    else if(_sampleName.find("fake")!=(size_t)-1) {
-      if(!genMatchedToFake(_idxL1) && !genMatchedToFake(_idxL2) ) return false;
-    }
-    else {
-      //if( genMatchedToFake(_idxL1) || genMatchedToFake(_idxL2) ) return false;
-    }
-  }
+  //   if(_sampleName.find("charge")!=(size_t)-1) {
+  //     if( !genMatchedMisCharge() )
+  // 	return false;
+  //   }
+  //   else if(_sampleName.find("fake")!=(size_t)-1) {
+  //     if(!genMatchedToFake(_idxL1) && !genMatchedToFake(_idxL2) ) return false;
+  //   }
+  //   else {
+  //     //if( genMatchedToFake(_idxL1) || genMatchedToFake(_idxL2) ) return false;
+  //   }
+  // }
   return true;
 }
 
@@ -1571,8 +1643,8 @@ SSDL2015::chargeFlipProb() {
 
     if(_auxFlags[i]!=kIsOS) continue;
 
-    float p1=_dbm->getDBValue(db, _auxPairs[i][0]->pt(), std::abs(_auxPairs[i][0]->eta()));
-    float p2=_dbm->getDBValue(db, _auxPairs[i][1]->pt(), std::abs(_auxPairs[i][1]->eta()));
+    float p1=_dbm->getDBValue(db, _auxPairs[i][0]->pt(), std::abs(_auxPairs[i][0]->eta()))*1.19;
+    float p2=_dbm->getDBValue(db, _auxPairs[i][1]->pt(), std::abs(_auxPairs[i][1]->eta()))*1.19;
 
     if(p1>0.01) p1=0.0005;
     if(p2>0.01) p2=0.0005;
@@ -1601,12 +1673,12 @@ SSDL2015::testRegion() {
 
       if(_sels[_SR][is][ii][0]=="LL") { //lepton pt scheme, specific case 
 	if(_sels[_SR][is][ii][2]=="hh" && 
-	   (_l1Cand->pt()<25 || _l2Cand->pt()<25) ) {passSel=false;break;} // || !passHLT("DL")
+	   (_l1Cand->pt()<25 || _l2Cand->pt()<25) ) {passSel=false;break;}
 	if(_sels[_SR][is][ii][2]=="hl" &&
 	   ( (_l1Cand->pt()<25 && _l2Cand->pt()<25) ||
-	     (_l1Cand->pt()>=25 && _l2Cand->pt()>=25) ) ) {passSel=false;break;} // || !passHLT("DL")
+	     (_l1Cand->pt()>=25 && _l2Cand->pt()>=25) ) ) {passSel=false;break;}
 	if(_sels[_SR][is][ii][2]=="ll" && 
-	   (_l1Cand->pt()>=25 || _l2Cand->pt()>=25 ) ) {passSel=false;break;} // || !passHLT("DLHT")
+	   (_l1Cand->pt()>=25 || _l2Cand->pt()>=25 ) ) {passSel=false;break;}
       
       }
       else { //all other selections
@@ -2075,11 +2147,10 @@ SSDL2015::selectLeptons() {
   }
   
   _susyMod->cleanJets( &_jetCleanLeps10, _allJets, _allJetsIdx, _bJets, _bJetsIdx,
-		       _lepJets, _lepJetsIdx, 25, 25, getUncName()=="JES", getUncDir() );
+		       _lepJets, _lepJetsIdx, 25, (_skim?20:25), getUncName()=="JES", getUncDir() );
   _susyMod->ptJets(_allJets, _allJetsIdx, _jets, _jetsIdx, 40);
   _HT=_susyMod->HT( &(_jets) );
-  //cout<<"HT :"<<getUncName()<<" / "<<getUncDir()<<" --> "<<_HT<<endl;
-  
+   
    //OS case with no Z Veto!======================
   for(size_t il=0;il<_looseLepsPtCut.size();il++) {
 
@@ -2089,8 +2160,7 @@ SSDL2015::selectLeptons() {
      _tightLepsOSPtCut.push_back(_looseLepsPtCut[il]);
      _tightLepsOSPtCutIdx.push_back(_looseLepsPtCutIdx[il]);
   }
-  //cout<<_tightLepsOSPtCut.size()<<"  <====>  "<<_looseLeps.size()<<endl;
-  
+   
   //fakable leptons definitions =======================
   for(size_t il=0;il<_looseLepsPtCorrCutVeto.size();il++) {
     if(tightLepton(_looseLepsPtCorrCutVeto[il], _looseLepsPtCorrCutVetoIdx[il],
@@ -2126,91 +2196,11 @@ SSDL2015::selectLeptons() {
 TVector2
 SSDL2015::varyMET() {
 
-  // unsigned int nJets=_vc->get("nJet");
-  // unsigned int nDiscJets=_vc->get("nDiscJet");
-  // unsigned int nFwdJets=_vc->get("nJetFwd");
-  // if(!isInUncProc() ) {//first, store the jets
-  //   _uncleanJets.clear();
-  //   _uncleanDiscJets.clear();
-  //   _uncleanFwdJets.clear();
-  //   for(unsigned int ij=0;ij<nJets;ij++) { 
-  //     TVector2 jet; jet.SetMagPhi( _vc->get("Jet_pt", ij), _vc->get("Jet_phi", ij)   );
-  //     _uncleanJets.push_back(jet);
-  //   }
-  //   for(unsigned int ij=0;ij<nDiscJets;ij++) { 
-  //     TVector2 jet; jet.SetMagPhi( _vc->get("DiscJet_pt", ij), _vc->get("DiscJet_phi", ij)   );
-  //     _uncleanDiscJets.push_back(jet);
-  //   }
-  //   for(unsigned int ij=0;ij<nFwdJets;ij++) { 
-  //     TVector2 jet; jet.SetMagPhi(_vc->get("JetFwd_pt", ij),_vc->get("JetFwd_phi", ij));
-  //     _uncleanFwdJets.push_back(jet);
-  //   }
-  
-    // for(unsigned int ij=0;ij<nJets;ij++) {
-    //   cout<<getUncName()<<" -> "<<_vc->get("Jet_pt", ij)<<" / "<<_vc->get("Jet_eta", ij)<<endl;
-    // }
-    // for(unsigned int ij=0;ij<nDiscJets;ij++) {
-    //   cout<<getUncName()<<" -> "<<_vc->get("DiscJet_pt", ij)<<" / "<<_vc->get("DiscJet_eta", ij)<<endl;
-    // }
-    // for(unsigned int ij=0;ij<nFwdJets;ij++) {
-    //   cout<<getUncName()<<" -> "<<_vc->get("JetFwd_pt", ij)<<" / "<<_vc->get("JetFwd_eta", ij)<<endl;
-    // }
-  //}
-
   string ext="met";
   if((isInUncProc() &&  getUncName()=="JES") )
     ext += ((SystUtils::kUp==getUncDir())?"_jecUp":"_jecDown");
 
   TVector2 met; met.SetMagPhi(_vc->get(ext+"_pt"), _vc->get(ext+"_phi") );
-  //cout<<"MET :"<<getUncName()<<" / "<<getUncDir()<<" --> "<<met.Mod()<<endl;
-  return met;
-  //if(!(isInUncProc() &&  getUncName()=="jes") ) return met;
-  
-  // for(unsigned int ij=0;ij<nJets;ij++) { 
-    
-  //   bool find=false;
-  //   for(unsigned int iv=0;iv<_lepJetsIdx.size();iv++) {
-  //     if("Jet"==_lepJetsIdx[iv].first && ij==_lepJetsIdx[iv].second) { find=true; break;}
-  //   }
-  //   if(find) continue; //bloody lepton cleaning
-   
-  //   //add back the standard jets
-  //   met += _uncleanJets[ij];
-  //   //JES varied jets
-  //   float scale=_dbm->getDBValue("jes", _vc->get("Jet_eta", ij), _vc->get("Jet_pt", ij));
-  //   scale = ((SystUtils::kUp==getUncDir())?1:(-1))*scale;
-  //   TVector2 jet; jet.SetMagPhi( _vc->get("Jet_pt", ij)*(1+scale), _vc->get("Jet_phi", ij)   );
-  //   met -= jet;
-  //   //cout<<" -> "<<_vc->get("Jet_pt", ij)*(1+scale)<<" / "<<_vc->get("Jet_eta", ij)<<endl;
-  // }
-  // for(unsigned int ij=0;ij<nDiscJets;ij++) { 
-    
-  //   bool find=false;
-  //   for(unsigned int iv=0;iv<_lepJetsIdx.size();iv++) {
-  //     if("DiscJet"==_lepJetsIdx[iv].first && ij==_lepJetsIdx[iv].second) { find=true; break;}
-  //   }
-  //   if(find) continue; //bloody lepton cleaning
-    
-  //   //add back the standard jets
-  //   met += _uncleanDiscJets[ij];
-  //   //JES varied jets
-  //   float scale=_dbm->getDBValue("jes", _vc->get("DiscJet_eta", ij), _vc->get("DiscJet_pt", ij));
-  //   scale = ((SystUtils::kUp==getUncDir())?1:(-1))*scale;
-  //   TVector2 jet; jet.SetMagPhi( _vc->get("DiscJet_pt", ij), _vc->get("DiscJet_phi", ij)   );
-  //   met -= jet;
-  //   //cout<<" -> "<<_vc->get("DiscJet_pt", ij)*(1+scale)<<" / "<<_vc->get("DiscJet_eta", ij)<<endl;
-  // }
-  // for(unsigned int ij=0;ij<nFwdJets;ij++) { 
-  //   //add back the standard jets
-  //   met += _uncleanFwdJets[ij];
-  //   //JES varied jets
-  //   float scale=_dbm->getDBValue("jes", _vc->get("JetFwd_eta", ij), _vc->get("JetFwd_pt", ij));
-  //   scale = ((SystUtils::kUp==getUncDir())?1:(-1))*scale;
-  //   TVector2 jet; jet.SetMagPhi(_vc->get("JetFwd_pt", ij), _vc->get("JetFwd_phi", ij) );
-  //   met -= jet;
-  //   //cout<<" -> "<<_vc->get("JetFwd_pt", ij)*(1+scale)<<" / "<<_vc->get("JetFwd_eta", ij)<<endl;
-  // }
-
   return met;
 }
 
@@ -2463,13 +2453,14 @@ SSDL2015::passNoiseFilters(){
   if(_vc -> get("hbheFilterIso"     ) == 0) return false;
   if(_vc -> get("Flag_eeBadScFilter") == 0) return false;
   if(_vc -> get("Flag_goodVertices" ) == 0) return false;
-  if(_sampleName.find("Run2015C") != std::string::npos){
-    if(_vc -> get("Flag_CSCTightHaloFilter") == 0) return false;
-  }
-  else {
-    if(!passCSCfilter()                          ) return false;
-    if(!passEESCfilter()                         ) return false;
-  }
+  //if(_vc -> get("Flag_CSCTightHaloFilter") == 0) return false;
+  // if(_sampleName.find("Run2015C") != std::string::npos){
+  //   if(_vc -> get("Flag_CSCTightHaloFilter") == 0) return false;
+  // }
+  // else {
+  //   if(!passCSCfilter()                          ) return false;
+  //   if(!passEESCfilter()                         ) return false;
+  // }
 
   return true;
 
@@ -2570,4 +2561,94 @@ SSDL2015::loadScanHistogram() {
   string mpafenv=string(getenv ("MPAF"))+"/workdir/database/histoScanT1tttt.root";
   TFile* file=new TFile(mpafenv.c_str(),"read");
   _hScanWeight=(TH3D*)file->Get("CountSMS");
+}
+
+void
+SSDL2015::dumpEvents() {
+
+  if( getCurrentWorkflow()==0) return; //getCurrentWorkflow()==100 ||
+  if(  getCurrentWorkflow()>kBR30L //kSR8C
+     //   ||
+     // getCurrentWorkflow()==kBR00H
+     //  || getCurrentWorkflow()==kBR10H
+     //  || getCurrentWorkflow()==kBR20H
+     //  || getCurrentWorkflow()==kBR30H
+      ) return;
+  int run=_vc->get("run");
+  int lumi=_vc->get("lumi");
+  unsigned long event=_vc->get("evt");
+  int nLep = _looseLeps.size();//_looseLepsVeto.size();//_vc->get("nLepGood_Mini");
+  // cout<<" <====> "<<_vc->get("nLepGood_Mini")<<"  "<<_looseLepsVeto.size()<<"  "<<_looseLeps.size()<<endl;
+  int id1 = _l1Cand->pdgId();
+  double pt1 = _l1Cand->pt();
+  int id2 = _l2Cand->pdgId();
+  double pt2 = _l2Cand->pt();
+  int njet = _nJets;
+  int nbjet = _nBJets;
+  double met = _met->pt();
+  double HT = _HT;
+  int sr = ((getCurrentWorkflow()<kBR00H_Fake)?(getCurrentWorkflow()):(0));
+  //cout<<" signal region : "<<sr<<endl;
+
+  if(getCurrentWorkflow()>kSR8C) sr=0;
+
+  if(sr>33+27) sr=sr-33-27;
+  if(sr>33) sr=sr-33;
+  
+  // if(getCurrentWorkflow()==kBR00H_Fake || getCurrentWorkflow()==kBR10H_Fake || getCurrentWorkflow()==kBR20H_Fake || getCurrentWorkflow()==kBR30H_Fake) sr=0;
+  
+  //if(_isFake && sr > 0) {
+  //if(WF == kGlobal && sr == 33) {
+  *_ofileDump << Form("%1d %9d %12lu\t%2d\t%+2d %5.1f\t%+2d %5.1f\t%d\t%2d\t%5.1f\t%6.1f\t%2d",
+		      run, lumi, event, nLep,
+		      id1, pt1, id2, pt2,
+		      njet, nbjet, met, HT,
+		      sr ) << endl;
+
+  //}
+
+  //if(_auxPairs.size()>=1 && offset==kBR30L_Fake) { // && _auxFlags[0]==kIsFake) {
+  //if(_auxPairs.size()==1 && _auxFlags[0]==kIsFake) {
+  // unsigned long int event=(unsigned long int )_vc->get("evt");
+  //   float lepPtT = _vc->get("LepGood_pt",_idxL1);
+  //   float lepPt = _vc->get("LepGood_pt",_idxL2);
+  //   float conePt = _l2Cand->pt();
+  //   float pTrel = _vc->get("LepGood_jetPtRelv2",_idxL2);
+  //   float jetPt = _susyMod->closestJetPt(_idxL2); //_vc->get("LepGood_jetRawPt",_idxL2)*_vc->get("LepGood_jetCorrFactor_L1L2L3Res",_idxL2);
+  //   float w = _weight;
+  //   cout<<Form("%1d\t%5.2f\t%5.2f\t%5.2f\t%5.2f\t%5.2f\t%5.5f\t",event,lepPtT, lepPt,conePt, pTrel, jetPt, w)<<_categs[getCurrentWorkflow()-offset-1]<<endl; 
+    //}
+
+
+}
+
+
+
+void 
+SSDL2015::skimTrees() {
+
+  //WZ skim
+  //if(!ssLepSel && 
+  if(!_isData) { //by pass for MC
+    fillSkimTree();
+    return;
+  }
+
+  //fake background skim
+  // if(_isFake && (_sampleName.find("fakes")!=string::npos) ){
+  //   fillSkimTree();
+  // }
+  
+  // //OS skim
+  // else if(_isOS && _sampleName.find("OS2l")!=string::npos ){
+  //   fillSkimTree();
+  // }
+  
+  // //main skim
+  // if(!_isFake && !_isOS && 
+  //    _sampleName.find("fakes")==string::npos && 
+  //    _sampleName.find("OS2l")==string::npos) {
+    fillSkimTree();
+    //}
+
 }

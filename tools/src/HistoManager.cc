@@ -167,6 +167,7 @@ HistoManager::addVariable(string var, int nBinX, vector<float> binsX, int nBinY,
 }
 
 
+
 //____________________________________________________________________________
 hObs HistoManager::preparehObs(string var, int nbinsX, vector<float> bins, string Xleg,
 			       string Yleg, string type, bool isglb, bool prof, int nbinsY, vector<float> binsY ) {
@@ -532,6 +533,7 @@ void HistoManager::fill(string var, int ds, string type, float value, float weig
     if( _itVar == _variables.end() ) {
 
       bool isGbl=_variables[var].IsGlobal();
+      if(!_itVar->second.isRelevantUnc(type)) return;
 
       if( _cItVar->second.binsX.size() == 2) {
 	addVariable(nameH, _cItVar->second.nBX, _cItVar->second.binsX[0], _cItVar->second.binsX[1],
@@ -548,6 +550,29 @@ void HistoManager::fill(string var, int ds, string type, float value, float weig
   }
   
 }
+
+//____________________________________________________________________________
+void
+HistoManager::setRelevantWFs(string var, vector<string> wfs) {
+  _itVar = _variables.find(var);
+  if(_itVar == _variables.end() ) {
+    cout << " Error, no such variable declared, " << var << endl;
+    return;
+  }
+
+  _itVar->second.setRelevantWFs(wfs);
+}
+
+void
+HistoManager::setRelevantUncs(string var, vector<string> uncs) {
+  _itVar = _variables.find(var);
+  if(_itVar == _variables.end() ) {
+    cout << " Error, no such variable declared, " << var << endl;
+    return;
+  }
+  _itVar->second.setRelevantUncs(uncs);
+}
+
 
 //____________________________________________________________________________
 void HistoManager::saveHistos(string anName, string conName, map<string, int> cnts, map<string, double> wgtcnts) {
@@ -607,6 +632,18 @@ void HistoManager::saveHistos(string anName, string conName, map<string, int> cn
     
     for(size_t ids = 0; ids < _dsNames.size(); ++ids) {
       TH1* htmp = (TH1*) getHisto(obs, ids)->Clone();
+      //protection against negative yields in histo bins
+      if(false){
+      for(int bin =0; bin < htmp->GetNbinsX()+2;bin++){
+          if(htmp->GetBinContent(bin)<0){
+              float mean = htmp->GetBinContent(bin);
+              float err = htmp->GetBinError(bin);
+              htmp->SetBinContent(bin,0);
+              float err_new = sqrt(err*err+(std::abs(mean)*std::abs(mean)));
+              htmp->SetBinError(bin,err_new);
+          }
+      }
+      }
       htmp->SetName( _dsNames[ids].c_str() );
       htmp->Write();     
 
@@ -755,7 +792,7 @@ HistoManager::findSysts(string var,string type) { //for uncertainties
   for(size_t in=0;in<names.size();in++) {
     vars[ names[in] ] = (TH1*)getHisto( names[in] ,0)->Clone();
   }
-  
+ 
   return vars;
 }
 

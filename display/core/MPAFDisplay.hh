@@ -117,14 +117,14 @@ public:
   void loadAutoBinning(string file);
     
 
-  void getStatistics(string categ="nominal");
+  void getStatistics(string categ="nominal", bool latexOnly = false, bool header=true);
   void drawStatistics(string categ="nominal", string cname="", 
 		      bool multiScheme=false, bool vetoOpt=false, string optCateg="");
 
   void addExternalSystUnc(string dsName, string unctag, float Up, float Do,
 			  string categ="", string cname="");
   void getDetailSystematics(string categ, string lvl);
-  void getCategSystematic(string src, string categ, string lvl, bool latex=false);
+  void getCategSystematic(string src, string categ, string lvl, string vetos="", bool latex=false);
 
   void savePlot(string path, string advname="");
   void producePlots(string path);
@@ -143,6 +143,9 @@ public:
   void drawSignificance(string o1);
   void drawCumulativePlots(string o1);
   void drawDetailSyst(bool cumul);
+  void drawStatVsSystematic(const string& dss, const string& src, 
+			    const string& categ, const string& lvl,
+			    const string& vetos);
 
   void getIntegral(float x1, float x2, float y1=0, float y2=1000000);
   
@@ -157,6 +160,8 @@ public:
   void makeSingleDataCard(string sigName, string categ, string cname, string cardName);
   void makeMultiDataCard(string sigName, vector<string> categs, 
 			 string cname, string cardname);
+
+std::string trim(std::string, std::string chr = " ");
 
   ClassDef(MPAFDisplay,0)
 

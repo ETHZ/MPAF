@@ -49,6 +49,7 @@ private:
 
   TCanvas* _c;
   TLegend* _leg;
+  TLegend* _leg2;
   vector<vector<TPad*> > _pads;
 
 
@@ -160,6 +161,11 @@ private:
   bool _mcOnly;
   bool _dOnly;
   bool _lockData;
+  
+  //other flags
+  bool _closure;
+  bool _nlo_vs_lo;
+  bool _fixLeg;
 
   //uncertainties
   bool _uncDet;
@@ -198,7 +204,7 @@ public:
 			bool AddSystematics, bool mcStatSyst,
 			float MarkerSize, float LineWidth,
 			bool sSignal, bool mcOnly,
-			bool cmsPrel, bool uncDet=false); //,bool switchRMS, string errorOpt
+			bool cmsPrel, bool uncDet=false, bool closure=false, bool nlo_vs_lo=false, bool fixLeg=false); //,bool switchRMS, string errorOpt
 
   void setObservables(string v1, string v2="", string v3="",
 		      string v4="", string v5="", string v6="");
@@ -232,6 +238,8 @@ public:
   void prepareStatistics( vector<pair<string,vector<vector<map<string,float> > > > > vals, vector<string> dsnames, bool isMultiScheme);
   void drawStatistics( vector<pair<string,vector<vector<map<string,float> > > > > vals, vector<string> dsnames, bool isMultiScheme);
   void drawDetailSystematics(bool cumul);
+  void drawStatVsSystematics(vector<vector<vector<float> > > numbers, string src);
+
 
   void addText(float x, float y, float s, string text);
   void addLine(float x1, float y1, float x2, float y2, int style, int col, int size);

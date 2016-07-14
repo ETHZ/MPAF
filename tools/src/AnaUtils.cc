@@ -25,6 +25,11 @@ AnaUtils::AnaUtils() {
   _nWF=1;
   _curWF=-100;
   _isMultiWF=false;
+
+  //counters
+  _disableCounter=false;
+  _singleCounter="";
+
 }
 
 AnaUtils::~AnaUtils() {
@@ -42,8 +47,8 @@ bool AnaUtils::cbool(bool skip, bool bname) {
   
 }
 
-string 
-AnaUtils::invCut(string type) {
+const string
+AnaUtils::invCut(const string& type) {
   if(type=="<") {
     return ">=";
   }
@@ -80,9 +85,14 @@ AnaUtils::invCut(string type) {
   }
 } 
 
+void
+AnaUtils::setCounterOption(bool disableCounter, string singleCounter) {
+  _disableCounter=disableCounter;
+  _singleCounter=singleCounter;
+}
 
 void
-AnaUtils::setWFEfficiencies(int ids, string cName, float w, bool acc, string uncName ) {
+AnaUtils::setWFEfficiencies(int ids, const string& cName, float w, bool acc, const string& uncName ) {
   
   if(_isMultiWF) {
     for(unsigned int ic=0;ic<_multiWFs.size();ic++) {
@@ -104,12 +114,14 @@ AnaUtils::setWFEfficiencies(int ids, string cName, float w, bool acc, string unc
 }
 
 
-void AnaUtils::setEfficiency(int ids, string cName, int iCateg, float w, bool acc) {
+void AnaUtils::setEfficiency(int ids, const string& cName, int iCateg, float w, bool acc) {
   
   //  Acceptance
   if(_useAccForEff)
     if(!_inAcc) w=0;
   
+
+  //if(_effMap[ ids ][ iCateg ].size()<iCName ) // create the map 
   _itEIMap=_effMap[ ids ][iCateg].find( cName );
   if(_itEIMap==_effMap[ ids ][ iCateg ].end() ) {
     EffST tmp;
@@ -119,6 +131,7 @@ void AnaUtils::setEfficiency(int ids, string cName, int iCateg, float w, bool ac
     tmp.sumwTot = 0; tmp.sumw2Tot = 0;
     tmp.NTot = 0;    
     
+    //_effMap[ ids ][ iCateg ].push_back(tmp);
     _effMap[ ids ][ iCateg ][ cName ] = tmp;
 
     bool exists=false;
@@ -129,6 +142,7 @@ void AnaUtils::setEfficiency(int ids, string cName, int iCateg, float w, bool ac
       _categories[ iCateg ].effNames.push_back( cName );
   }
   
+  //if(_effMap[ _kMC ][ iCateg ].size()<iCName ) // create the map 
   if(_itEIMap==_effMap[ _kMC ][ iCateg ].end() ) {
     EffST tmp;
     tmp.eff = 0;
@@ -137,6 +151,7 @@ void AnaUtils::setEfficiency(int ids, string cName, int iCateg, float w, bool ac
     tmp.sumwTot = 0; tmp.sumw2Tot = 0;
     tmp.NTot = 0;    
 
+    //_effMap[ _kMC ][ iCateg ].push_back(tmp);
     _effMap[ _kMC ][ iCateg ][ cName ] = tmp;
   }
 
@@ -145,12 +160,13 @@ void AnaUtils::setEfficiency(int ids, string cName, int iCateg, float w, bool ac
 }
 
 
-void AnaUtils::setEffFromStat(int ids, string cName, int iCateg, float sw, float esw, int ngen) {
+void AnaUtils::setEffFromStat(int ids, const string& cName, int iCateg, float sw, float esw, int ngen) {
  
   //  Acceptance
   // if(_useAccForEff)
   //   if(!_inAcc) w=0;
  
+  //if(_effMap[ _kMC ][ iCateg ].size()<iCName ) // create the map 
   _itEIMap=_effMap[ ids ][iCateg].find( cName );
   if(_itEIMap==_effMap[ ids ][ iCateg ].end() ) {
    
@@ -161,6 +177,7 @@ void AnaUtils::setEffFromStat(int ids, string cName, int iCateg, float sw, float
     tmp.sumwTot = 0; tmp.sumw2Tot = 0;
     tmp.NTot = 0;    
  
+    //_effMap[ ids ][ iCateg ].push_back(tmp);
     _effMap[ ids ][ iCateg ][ cName ] = tmp;
 
     bool exists=false;
@@ -171,6 +188,7 @@ void AnaUtils::setEffFromStat(int ids, string cName, int iCateg, float sw, float
       _categories[ iCateg ].effNames.push_back( cName );
   }
   
+  //if(_effMap[ _kMC ][ iCateg ].size()<iCName ) // create the map 
   if(_itEIMap==_effMap[ _kMC ][ iCateg ].end() ) {
     EffST tmp;
     tmp.eff = 0;
@@ -179,6 +197,7 @@ void AnaUtils::setEffFromStat(int ids, string cName, int iCateg, float sw, float
     tmp.sumwTot = 0; tmp.sumw2Tot = 0;
     tmp.NTot = 0;    
 
+    //_effMap[ _kMC ][ iCateg ].push_back(tmp);
     _effMap[ _kMC ][ iCateg ][ cName ] = tmp;
   }
 
@@ -186,7 +205,7 @@ void AnaUtils::setEffFromStat(int ids, string cName, int iCateg, float sw, float
 
 }
 
-void AnaUtils::addDataset(string dsName) {
+void AnaUtils::addDataset(const string& dsName) {
   
   _dsNames.push_back(dsName);
   eMap tmp;
@@ -222,7 +241,7 @@ AnaUtils::init() {
 
 
 void
-AnaUtils::internalAddCategory(int iCateg, string nCateg, string uncTag, bool isWF) {
+AnaUtils::internalAddCategory(int iCateg, const string& nCateg, const string& uncTag, bool isWF) {
   
   if(_categories.find(iCateg) !=_categories.end() ) return;
 
@@ -245,13 +264,13 @@ AnaUtils::internalAddCategory(int iCateg, string nCateg, string uncTag, bool isW
 }
 
 void
-AnaUtils::addWorkflow(int iCateg, string nCateg) {
+AnaUtils::addWorkflow(int iCateg, const string& nCateg) {
   internalAddCategory(iCateg, "global_"+nCateg, "", true);
 }
 
 
 void
-AnaUtils::addAutoWorkflow(string uncTag) {
+AnaUtils::addAutoWorkflow(const string& uncTag) {
 
   //single duplication ================
   // _isWF[ _nWF ] = false;
@@ -275,19 +294,19 @@ AnaUtils::addAutoWorkflow(string uncTag) {
 }
 
 void
-AnaUtils::addCategory(int iCateg, string nCateg) {
+AnaUtils::addCategory(int iCateg, const string& nCateg) {
   internalAddCategory(iCateg, nCateg, "", false);
 }
 
 
 void
-AnaUtils::addCategory(int iCateg, string nCateg, string uncTag) {
+AnaUtils::addCategory(int iCateg, const string& nCateg, const string& uncTag) {
   internalAddCategory(iCateg, nCateg, uncTag, true);
 }
 
 void
-AnaUtils::setWFSystematics(int ids, string cName, string sName, bool up,
-			   bool down, float w, string uncName) {
+AnaUtils::setWFSystematics(int ids, const string& cName, const string& sName, bool up,
+			   bool down, float w, const string& uncName) {
   
  if(_isMultiWF) {
     for(unsigned int ic=0;ic<_multiWFs.size();ic++) {
@@ -305,18 +324,24 @@ AnaUtils::setWFSystematics(int ids, string cName, string sName, bool up,
 
 
 void 
-AnaUtils::setSystematics(int ids, string cName, int iCateg, string sName, bool up, bool down, float w) {
+AnaUtils::setSystematics(int ids, const string& cName, int iCateg, const string& sName, bool up, bool down, float w) {
 
   bool accept[2] = {false,false};
   accept[0] = up;
   accept[1] = down;
   
   float val=w;
+
+  //_effMap[ ids ][ iCateg ][ iSel ].systsU[ sName ] +=(accept[0]?val:0);
+  //_effMap[ ids ][ iCateg ][ iSel ].systsD[ sName ] +=(accept[1]?val:0);
  
   _effMap[ ids ][ iCateg ][ cName ].systsU[ sName ] +=(accept[0]?val:0);
   _effMap[ ids ][ iCateg ][ cName ].systsD[ sName ] +=(accept[1]?val:0);
   
   if(_dsNames[ids]!="data" && _dsNames[ids]!="Data") {
+    // _effMap[ _kMC ][ iCateg ][ iSel ].systsU[ sName ] +=(accept[0]?val:0);
+    // _effMap[ _kMC ][ iCateg ][ iSel ].systsD[ sName ] +=(accept[1]?val:0);
+
     _effMap[ _kMC ][ iCateg ][ cName ].systsU[ sName ] +=(accept[0]?val:0);
     _effMap[ _kMC ][ iCateg ][ cName ].systsD[ sName ] +=(accept[1]?val:0);
   }
@@ -366,13 +391,13 @@ AnaUtils::getYieldSysts(EffST eST, map<string,float>& rU, map<string,float>& rD,
 }
 
 float
-AnaUtils::getYield(int ids, string cName, int icat) {
+AnaUtils::getYield(int ids, const string& cName, int icat) {
 
   return _effMap[ ids ][ icat ][ cName ].sumw;
 }
 
 void
-AnaUtils::getSystematics(string ds, string lvl, string categ) {
+AnaUtils::getSystematics(const string& ds, const string& lvl, const string& categ) {
 
   int ids = -1;
   for(size_t i=0;i<_dsNames.size();i++) 
@@ -392,7 +417,7 @@ AnaUtils::getSystematics(string ds, string lvl, string categ) {
   
   _itEIMap=_effMap[ ids ][ iCat ].find(lvl);
   if(_itEIMap==_effMap[ ids ][ iCat ].end() ) {
-    cout<<" Error, no ["<<lvl<<"] selection available for printin uncertainties "<<endl;
+    cout<<" Error, no ["<<lvl<<"] selection available for printing uncertainties "<<endl;
     return;
   }
 
@@ -444,83 +469,164 @@ AnaUtils::getSystematics(string ds, string lvl, string categ) {
 
 
 void
-AnaUtils::getCategSystematics(string ds, string src, string lvl, string categ, bool latex) {
+AnaUtils::getCategSystematics(const string& dss, const string& src, const string& lvl, const string& categ, const string& vetos, bool latex) {
 
-  int ids = -1;
-  for(size_t i=0;i<_dsNames.size();i++) 
-    if(ds==_dsNames[i]) {ids=i; break;}
+  vector<string> vds=parse(dss,":");
+  vector<size_t> idss;
+  for(size_t j=0;j<vds.size();j++) {
+    for(size_t i=0;i<_dsNames.size();i++) { 
+      if(vds[j]==_dsNames[i]) {idss.push_back(i); break;}
+    }
+  }
 
-  if(ids==-1) {
-    cout<<" Error, no ["<<ds<<"] dataset available for printing uncertainties "<<endl;
+  if(idss.size()==0) {
+    cout<<" Error, no ["<<dss<<"] datasets available for printing uncertainties "<<endl;
     return;
   }
   
-  cout<<endl<<" ======================= "<<setw(12)<<ds <<" ("<<src<<") ======================== "<<endl;
 
-  for(_itC=_categories.begin();_itC!=_categories.end();++_itC) {
+  vector<string> vveto=parse(vetos,":");
 
-    string cname=_itC->second.name;
-    if(cname.find(categ)==string::npos) continue;
+  for(size_t idx=0;idx<idss.size();idx++) {
+    size_t ids=idss[idx];
 
-    _itEIMap=_effMap[ ids ][ _itC->second.id ].find(lvl);
-    if(_itEIMap==_effMap[ ids ][ _itC->second.id ].end()) continue;
+    cout<<endl<<" ======================= "<<setw(12)<<_dsNames[ids] <<" ("<<src<<") ======================== "<<endl;
+
+    for(_itC=_categories.begin();_itC!=_categories.end();++_itC) {
+
+      string cname=_itC->second.name;
+      if(cname.find(categ)==string::npos) continue;
+      for(size_t iv=0;iv<vveto.size();iv++) {
+	if(cname.find(vveto[iv])!=string::npos) continue;
+      }
+
+      _itEIMap=_effMap[ ids ][ _itC->second.id ].find(lvl);
+      if(_itEIMap==_effMap[ ids ][ _itC->second.id ].end()) continue;
     
-    EffST eST=_itEIMap->second;
-    float central;
+      EffST eST=_itEIMap->second;
+      float central;
     
-    float totUp=0,totDown=0;
-    map<string,float> rU, rD;
+      float totUp=0,totDown=0;
+      map<string,float> rU, rD;
     
-    //retrieve systematic uncertainties
-    getYieldSysts(eST, rU, rD, totUp, totDown, central);
-    cout<<setprecision(2)<<fixed;
-    if(cname.find("global")!=string::npos) cname.erase(0,7);
-    if(!latex)
-      cout<<setw(10)<<cname<<"\t"<<setw(5)<<central<<" +- "<<setw(5)<<sqrt(eST.sumw2)<<"\t";
-    else
-      cout<<setw(10)<<cname<<" & "<<setw(5)<<central<<" $\\pm$ "<<setw(5)<<sqrt(eST.sumw2)<<"  &  ";
+      //retrieve systematic uncertainties
+      getYieldSysts(eST, rU, rD, totUp, totDown, central);
+      cout<<setprecision(2)<<fixed;
+      if(cname.find("global")!=string::npos) cname.erase(0,7);
+      if(!latex)
+	cout<<setw(10)<<cname<<"\t"<<setw(5)<<central<<" +- "<<setw(5)<<sqrt(eST.sumw2)<<"\t";
+      else
+	cout<<setw(10)<<cname<<" & "<<setw(5)<<central<<" $\\pm$ "<<setw(5)<<sqrt(eST.sumw2)<<"  &  ";
 
   
-    float yup;
-    float ydown;
-    if(src=="total") {
-      yup=totUp;
-      ydown=totDown;
-    } else {
-      yup=rU[ src];
-      ydown=rD[ src];
-    }
-    float rup=yup*100/central;
-    float rdown=ydown*100/central;
-    if(central==0) { rup=0; rdown=0;}
+      float yup;
+      float ydown;
+      if(src=="total") {
+	yup=totUp;
+	ydown=totDown;
+      } else {
+	yup=rU[ src];
+	ydown=rD[ src];
+      }
+      float rup=yup*100/central;
+      float rdown=ydown*100/central;
+      if(central==0) { rup=0; rdown=0;}
     
-    if(!latex) {
-      if( fabs(rup-rdown)>0.01*central ) { //asymetric
-	cout<<" + "<<setw(5)<<rup<<" - "<<setw(5)<<rdown<<" %  (+"
-	    <<setw(5)<<yup<<" -"<<setw(5)<<ydown<<" events)"<<endl;
+      if(!latex) {
+	if( fabs(rup-rdown)>0.01*central ) { //asymetric
+	  cout<<" + "<<setw(5)<<rup<<" - "<<setw(5)<<rdown<<" %  (+"
+	      <<setw(5)<<yup<<" -"<<setw(5)<<ydown<<" events)"<<endl;
+	}
+	else { //symetric
+	  cout<<" +- "<<setw(5)<<max(rup,rdown)<<" %         (+-      "<<setw(5)<<max(yup,ydown)<<" events)"<<endl;
+	}
       }
-      else { //symetric
-	cout<<" +- "<<setw(5)<<max(rup,rdown)<<" %         (+-      "<<setw(5)<<max(yup,ydown)<<" events)"<<endl;
+      else {
+	if( fabs(rup-rdown)>0.01*central ) { //asymetric
+	  cout<<" +"<<setw(5)<<rup<<"/-"<<setw(5)<<rdown
+	      <<" & +"<<setw(5)<<yup<<"/-"<<setw(5)<<ydown<<" \\\\ "<<endl;
+	}
+	else { //symetric
+	  cout<<" $\\pm$ "<<setw(5)<<max(rup,rdown)<<" & $\\pm$"<<setw(5)<<max(yup,ydown)<<" \\\\ "<<endl;
+	}
       }
-    }
-    else {
-      if( fabs(rup-rdown)>0.01*central ) { //asymetric
-	cout<<" +"<<setw(5)<<rup<<"/-"<<setw(5)<<rdown
-	    <<" & +"<<setw(5)<<yup<<"/-"<<setw(5)<<ydown<<" \\\\ "<<endl;
-      }
-      else { //symetric
-	cout<<" $\\pm$ "<<setw(5)<<max(rup,rdown)<<" & $\\pm$"<<setw(5)<<max(yup,ydown)<<" \\\\ "<<endl;
-      }
-    }
   
-  }//categds
+    }//categds
+
+  }// datasets
 
 }
 
+vector<vector<vector<float> > >
+AnaUtils::retrieveSystematicNumbers(const string& dss, const string& src, 
+				    const string& lvl, const string& categ, 
+				    const string& vetos) {
+
+  vector<vector<vector<float> > > out(2,vector<vector<float> >(0, vector<float>(2,0)) );
+
+  vector<string> vds=parse(dss,":");
+  vector<size_t> idss;
+  for(size_t j=0;j<vds.size();j++) {
+    for(size_t i=0;i<_dsNames.size();i++) { 
+      if(vds[j]==_dsNames[i]) {idss.push_back(i); break;}
+    }
+  }
+
+  if(idss.size()==0) {
+    cout<<" Error, no ["<<dss<<"] datasets available for printing uncertainties "<<endl;
+    return out;
+  }
+  
+  vector<string> vveto=parse(vetos,":");
+
+  for(size_t idx=0;idx<idss.size();idx++) {
+    size_t ids=idss[idx];
+
+    for(_itC=_categories.begin();_itC!=_categories.end();++_itC) {
+
+      string cname=_itC->second.name;
+      if(cname.find(categ)==string::npos) continue;
+      for(size_t iv=0;iv<vveto.size();iv++) {
+	if(cname.find(vveto[iv])!=string::npos) continue;
+      }
+
+      _itEIMap=_effMap[ ids ][ _itC->second.id ].find(lvl);
+      if(_itEIMap==_effMap[ ids ][ _itC->second.id ].end()) continue;
+    
+      EffST eST=_itEIMap->second;
+      float central;
+    
+      float totUp=0,totDown=0;
+      map<string,float> rU, rD;
+    
+      //retrieve systematic uncertainties
+      getYieldSysts(eST, rU, rD, totUp, totDown, central);
+
+      float yup;
+      float ydown;
+      if(src=="total") {
+	yup=totUp;
+	ydown=totDown;
+      } else {
+	yup=rU[ src];
+	ydown=rD[ src];
+      }
+      float rup=yup*100/central;
+      float rdown=ydown*100/central;
+      float stat=sqrt(eST.sumw2)*100/central;
+
+      out[0].push_back( vector<float>({ stat, rup }) );
+      out[1].push_back( vector<float>({ stat, rdown }) );
+
+    }//categs
+  }//datasets
+
+  return out;
+}
 
 
 void 
-AnaUtils::saveNumbers(string anName, string conName,  map<string, int> cnts,  map<string, double> wgtcnts) {
+AnaUtils::saveNumbers(const string& anName, const string& conName,  map<string, int> cnts,  map<string, double> wgtcnts) {
 
   // testing write permission on output directory
   cout << endl;
@@ -582,6 +688,7 @@ AnaUtils::saveNumbers(string anName, string conName,  map<string, int> cnts,  ma
     // to skip the simulation in a first time
     for(size_t ic = 0; ic < _categories[icat].effNames.size(); ++ic) { //cuts
 
+      //if(_effMap[ _kMC ][icat].size()<_categories[icat].effIdxs[ic])
       _itEIMap = _effMap[ _kMC ][icat].find( _categories[icat].effNames[ ic ] );
 	
       // out of the loop if no MC
@@ -665,7 +772,7 @@ AnaUtils::saveNumbers(string anName, string conName,  map<string, int> cnts,  ma
 }
 
 
-void AnaUtils::printNumbers() {
+void AnaUtils::printNumbers(ostream& o) {
   
   //move MC at the end
   vector<string> dsNames;
@@ -692,13 +799,13 @@ void AnaUtils::printNumbers() {
   for(size_t ic=0;ic<catNames.size();ic++) {
     int icat = catNames[ic];
     
-    cout<<endl<<endl;
-    cout<<" ===================================================================== "<<endl;
+    o<<endl<<endl;
+    o<<" ===================================================================== "<<endl;
     
-    if(_categories[ icat ].isUnc) cout<<" ============= Efficiency category : "<<setw(17)<<_categories[ icat ].name<<" ("<<setw(9)<<_categories[ icat ].uncTag<<") ==="<<endl;
-    else cout<<" ============= Efficiency category : "<<setw(17)<<_categories[ icat ].name<<" ==============="<<endl;
+    if(_categories[ icat ].isUnc) o<<" ============= Efficiency category : "<<setw(17)<<_categories[ icat ].name<<" ("<<setw(9)<<_categories[ icat ].uncTag<<") ==="<<endl;
+    else o<<" ============= Efficiency category : "<<setw(17)<<_categories[ icat ].name<<" ==============="<<endl;
       
-    cout<<" ===================================================================== "<<endl;
+    o<<" ===================================================================== "<<endl;
 
     for(size_t id=0;id<dsNames.size();id++) { //datasets
       string dsName = dsNames[id];
@@ -709,7 +816,7 @@ void AnaUtils::printNumbers() {
       float tmpswtot=-1;
       float tmpNTot=-1;
     
-      cout<<endl<< "Begin efficiencies for "<<dsName<<"   "<<_effMap[ids][icat].size()<<"  ********* "<<endl;
+      o<<endl<< "Begin efficiencies for "<<dsName<<"   "<<_effMap[ids][icat].size()<<"  ********* "<<endl;
     
       string initName;
       for(size_t ic=0;ic<_categories[ icat ].effNames.size();ic++) { //cut
@@ -756,14 +863,14 @@ void AnaUtils::printNumbers() {
 	if(globEff>1) globEff=1;
       
 	float globErr = StatUtils::BinomError( _effMap[ids][icat][ initName ].sumwTot, globEff);      
-	cout<<setprecision(3)<<fixed;
-	cout<<" --> "<<setw(30)<<_itEIMap->first<<"\t  = "<<eff<<" +- "<<error;
+	o<<setprecision(3)<<fixed;
+	o<<" --> "<<setw(30)<<_itEIMap->first<<"\t  = "<<eff<<" +- "<<error;
 	if( effL !=0 || effH!=0 ) 
-	  cout<<" (+ "<<systH<<" - "<<systL;
-	cout<<" \t\t "<<_itEIMap->second.sumw<<"  / "
+	  o<<" (+ "<<systH<<" - "<<systL;
+	o<<" \t\t "<<_itEIMap->second.sumw<<"  / "
 	    <<((tmpswtot==-1)?_itEIMap->second.sumwTot:tmpswtot);
-	cout<<"  ("<<_itEIMap->second.N<<" / "<<((tmpNTot==-1)?_itEIMap->second.NTot:tmpNTot)<<")";
-	cout<<"  ---> \t = "<<globEff*100<<" +- "<<globErr*100<<endl;
+	o<<"  ("<<_itEIMap->second.N<<" / "<<((tmpNTot==-1)?_itEIMap->second.NTot:tmpNTot)<<")";
+	o<<"  ---> \t = "<<globEff*100<<" +- "<<globErr*100<<endl;
       
 	tmpswtot =  _itEIMap->second.sumw;
 	tmpNTot = _itEIMap->second.N;
@@ -774,12 +881,12 @@ void AnaUtils::printNumbers() {
   
   }//categories
   
-  cout<<endl<<endl;
+  o<<endl<<endl;
 
 }
 
 int
-AnaUtils::getCategId(string categ) {
+AnaUtils::getCategId(const string& categ) {
   int icat=-1;
   int n=_categories.size();
 
@@ -793,7 +900,7 @@ AnaUtils::getCategId(string categ) {
 }
 
 int
-AnaUtils::getCategUniqueId(string categ, string uncTag) {
+AnaUtils::getCategUniqueId(const string& categ, const string& uncTag) {
   int icat=-1;
   int n=_categories.size();
 
@@ -868,7 +975,7 @@ AnaUtils::prepareDSNames(bool wMC, vector<int>& idxs) {
 
 
 void
-AnaUtils::printTables(string categ) {
+AnaUtils::printTables(const string& categ, bool latexOnly, bool header) {
   
   int icat= getCategId(categ);
   
@@ -880,7 +987,7 @@ AnaUtils::printTables(string categ) {
   cout<<endl<<endl;
   //For Latex
   
-  bool header=true;
+  header=true;
   //start from one to skip the simulation in a first time
   for(size_t ic=0;ic<_categories[ icat ].effNames.size();ic++) { //cuts
 
@@ -925,10 +1032,9 @@ AnaUtils::printTables(string categ) {
     }//datasets
   }//cuts
 
-
+  if(latexOnly) return;
   cout<<endl<<endl;
   
-
   //For Visu
 
   header=true;
@@ -984,7 +1090,7 @@ AnaUtils::printTables(string categ) {
 
 
 int 
-AnaUtils::findElement(vector<string> v, string e){
+AnaUtils::findElement(vector<string> v, const string& e){
 
   vector<string>::iterator i = find(v.begin(), v.end(), e);
   if(i == v.end()) return -1;
@@ -994,7 +1100,8 @@ AnaUtils::findElement(vector<string> v, string e){
 
 //selection:<nom, ds:nums> 
 vector< pair<string, vector<vector<map<string,float> > > > >
-AnaUtils::retrieveNumbers(string categ, string cname, int scheme, string opt) {
+AnaUtils::retrieveNumbers(const string& categ, const string& cname, 
+			  int scheme, const string& opt) {
   vector< pair<string, vector<vector<map<string,float> > > > > onums;
   if(categ=="") return onums;
 
@@ -1068,6 +1175,7 @@ AnaUtils::retrieveNumbers(string categ, string cname, int scheme, string opt) {
       
     p.second=v;
 
+    //if(_effMap[ _kMC ][ icat ],size()<iSel)
     _itEIMap = _effMap[ _kMC ][ icat ].find( sel );
     if( _itEIMap==_effMap[ _kMC ][ icat ].end() ) {
       cout<<"WARNING, no such selection name : ["<<cname<<"] in categ "<<categ
@@ -1080,6 +1188,7 @@ AnaUtils::retrieveNumbers(string categ, string cname, int scheme, string opt) {
       int ids = idxs[id];
 
       //simulation detail
+      //if(_effMap[ _kMC ][ icat ],size()<iSel)
       _itEIMap=_effMap[ ids ][ icat ].find( sel );
       if(_itEIMap==_effMap[ ids ][ icat ].end() ) {
 	p.second[ids][0]["tot"] = 0.; //no data for this point and this dataset
@@ -1117,8 +1226,8 @@ AnaUtils::retrieveNumbers(string categ, string cname, int scheme, string opt) {
 bool
 AnaUtils::getDataCardLines(map<string,string>& lines,
 			   shapeM& shapes, 
-			   vector<string> dsNames, string sigName,
-			   string categ, string cname, int bin,
+			   vector<string> dsNames, const string& sigName,
+			   const string& categ, const string& cname, int bin,
 			   map<string,vector<string> > intNuisPars,
 			   map<string,bool > nuisParExt,
 			   map<string,string> nuisParScheme,
@@ -1466,29 +1575,55 @@ AnaUtils::setMultiWorkflow(vector<int> wfs) {
   _isMultiWF=true;
 }
 
-void AnaUtils::setNumbers(int ids,string cName, int iCateg, float w, bool acc) {
+void AnaUtils::setNumbers(int ids,const string& cName, int iCateg, float w, bool acc) {
   
+
+  // _effMap[ ids ][ iCateg ][ iSel ].NTot +=1;
+  // _effMap[ ids ][ iCateg ][ iSel ].sumwTot +=w;
+  // _effMap[ ids ][ iCateg ][ iSel ].sumw2Tot +=w*w;
 
 
   _effMap[ ids ][ iCateg ][ cName ].NTot +=1;
   _effMap[ ids ][ iCateg ][ cName ].sumwTot +=w;
   _effMap[ ids ][ iCateg ][ cName ].sumw2Tot +=w*w;
 
+  // if(_dsIdx[ids]!=kData && 
+  //    _dsIdx[ids]<100) {
 
   if(_dsNames[ids]!="data" && _dsNames[ids]!="Data" && 
      _dsNames[ids].find("sig")==(size_t)-1) {
+  
+    // _effMap[ _kMC ][ iCateg ][ iSel ].NTot +=1;
+    // _effMap[ _kMC ][ iCateg ][ iSel ].sumwTot +=w;
+    // _effMap[ _kMC ][ iCateg ][ iSel ].sumw2Tot +=w*w;
+  
     _effMap[ _kMC ][ iCateg ][ cName ].NTot +=1;
     _effMap[ _kMC ][ iCateg ][ cName ].sumwTot +=w;
     _effMap[ _kMC ][ iCateg ][ cName ].sumw2Tot +=w*w;
   }
 
   if(acc) {
+    // _effMap[ ids ][ iCateg ][ iSel ].N +=1;
+    // _effMap[ ids ][ iCateg ][ iSel ].sumw +=w;
+    // _effMap[ ids ][ iCateg ][ iSel ].sumw2 +=w*w;
+
+
     _effMap[ ids ][ iCateg ][ cName ].N +=1;
     _effMap[ ids ][ iCateg ][ cName ].sumw +=w;
     _effMap[ ids ][ iCateg ][ cName ].sumw2 +=w*w;
 
+
+  // if(_dsIdx[ids]!=kData && 
+  //    _dsIdx[ids]<100) {
+
     if(_dsNames[ids]!="data" && _dsNames[ids]!="Data" && 
        _dsNames[ids].find("sig")==(size_t)-1) {
+
+      // _effMap[ _kMC ][ iCateg ][ iSel ].N +=1;
+      // _effMap[ _kMC ][ iCateg ][ iSel ].sumw +=w;
+      // _effMap[ _kMC ][ iCateg ][ iSel ].sumw2 +=w*w;
+
+
       _effMap[ _kMC ][ iCateg ][ cName ].N +=1;
       _effMap[ _kMC ][ iCateg ][ cName ].sumw +=w;
       _effMap[ _kMC ][ iCateg ][ cName ].sumw2 +=w*w;
@@ -1499,25 +1634,48 @@ void AnaUtils::setNumbers(int ids,string cName, int iCateg, float w, bool acc) {
 }
 
 
-void AnaUtils::setNumFromStat(int ids, string cName, int iCateg, float sw, float esw, int ngen) {
+void AnaUtils::setNumFromStat(int ids, const string& cName, int iCateg, float sw, float esw, int ngen) {
+
+  // _effMap[ ids ][ iCateg ][ iSel ].NTot +=ngen;
+  // _effMap[ ids ][ iCateg ][ iSel ].sumwTot +=sw;
+  // _effMap[ ids ][ iCateg ][ iSel ].sumw2Tot +=esw*esw;
  
   _effMap[ ids ][ iCateg ][ cName ].NTot +=ngen;
   _effMap[ ids ][ iCateg ][ cName ].sumwTot +=sw;
   _effMap[ ids ][ iCateg ][ cName ].sumw2Tot +=esw*esw;
 
+  // if(_dsIdx[ids]!=kData && 
+  //    _dsIdx[ids]<100) {
+
   if(_dsNames[ids]!="data" && _dsNames[ids]!="Data" && 
      _dsNames[ids].find("sig")==(size_t)-1) {
+
+    // _effMap[ _kMC ][ iCateg ][ iSel ].NTot +=ngen;
+    // _effMap[ _kMC ][ iCateg ][ iSel ].sumwTot +=sw;
+    // _effMap[ _kMC ][ iCateg ][ iSel ].sumw2Tot +=esw*esw;
+
     _effMap[ _kMC ][ iCateg ][ cName ].NTot +=ngen;
     _effMap[ _kMC ][ iCateg ][ cName ].sumwTot +=sw;
     _effMap[ _kMC ][ iCateg ][ cName ].sumw2Tot +=esw*esw;
   }
 
+  // _effMap[ ids ][ iCateg ][ iSel ].N +=ngen;
+  // _effMap[ ids ][ iCateg ][ iSel ].sumw +=sw;
+  // _effMap[ ids ][ iCateg ][ iSel ].sumw2 +=esw*esw;
+
   _effMap[ ids ][ iCateg ][ cName ].N +=ngen;
   _effMap[ ids ][ iCateg ][ cName ].sumw +=sw;
   _effMap[ ids ][ iCateg ][ cName ].sumw2 +=esw*esw;
 
+  // if(_dsIdx[ids]!=kData && 
+  //    _dsIdx[ids]<100) {
+
   if(_dsNames[ids]!="data" && _dsNames[ids]!="Data" && 
      _dsNames[ids].find("sig")==(size_t)-1) {
+    // _effMap[ _kMC ][ iCateg ][ iSel ].N +=ngen;
+    // _effMap[ _kMC ][ iCateg ][ iSel ].sumw +=sw;
+    // _effMap[ _kMC ][ iCateg ][ iSel ].sumw2 +=esw*esw;
+
     _effMap[ _kMC ][ iCateg ][ cName ].N +=ngen;
     _effMap[ _kMC ][ iCateg ][ cName ].sumw +=sw;
     _effMap[ _kMC ][ iCateg ][ cName ].sumw2 +=esw*esw;
@@ -1577,3 +1735,30 @@ AnaUtils::cloneHObs(const hObs* o1) {
 
 //====================================================
 //====================================================
+
+//parsing
+vector<string>
+AnaUtils::parse(const string& str, const string& d) {
+
+  vector<string> parsed;
+  if(str.find(d)==string::npos) {
+    cout<<"--> "<<str<<endl;
+    parsed.push_back(str);
+    return parsed;
+  }
+
+  size_t pt=0;
+  while( pt != (size_t)-1 ) {
+
+    size_t pi=str.find(d,pt);
+    pt = str.find(d,pi+1);
+  
+    if( pt == (size_t)-1) {
+      parsed.push_back( str.substr(pi+1,str.size()-pi-1-2) );    
+    }
+    else {
+      parsed.push_back( str.substr(pi+1,str.size()-pi-1-2) );    
+    }
+  }
+  return parsed;
+} 

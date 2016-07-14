@@ -314,7 +314,6 @@ AnaConfig::addSample( string str, string sname, int col, float weight, bool load
 
   //parse the sample name
   SampleId sId=parseSampleId(str);
-  
   if( sId.cr!="" ) {
     _csData.push_back( pair<string, float>(sId.name,sId.norm) );
   }

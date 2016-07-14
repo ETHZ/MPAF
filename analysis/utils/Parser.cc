@@ -51,6 +51,10 @@ Parser::parseLine(string line) {
     type=Parser::kFT;
   if(tks[0]=="summary")
     type=Parser::kSummary;
+  if(tks[0]=="systOnly")
+    type=Parser::kSyst;
+  if(tks[0]=="counterOpt")
+    type=Parser::kCounter;
 
   string val = tks[1];
 

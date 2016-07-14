@@ -270,7 +270,7 @@ DisplayClass::loadAutoBinning(string filename) {
 
 void 
 DisplayClass::setObservables(string v1, string v2, string v3,
-			string v4, string v5, string v6) {
+			     string v4, string v5, string v6) {
 
   _vars.clear();
 
@@ -345,9 +345,9 @@ DisplayClass::preparePads() {
     padhigh_.push_back(padtmp);
 
   }
-
+  cout<<padhigh_[0]<<"  "<<H_<<"  "<<ww_<<endl;
   pad_.push_back(padhigh_);
-
+  cout<<pad_[0][0]<<endl;
   return pad_;
 }
 
@@ -577,6 +577,7 @@ DisplayClass::plotDistribution(const string& htype, const string& type,
     if(_leg) {
       TLegend* tmpleg=(TLegend*)_leg->Clone();
       tmpleg->Draw("same");
+      if(_fixLeg) _leg2->Draw("same");
     } 
   }
 
@@ -693,7 +694,6 @@ DisplayClass::drawDistribution() {
   }
   
   // systematic uncertainties now ============
-  cout<<" systematics? "<<_addSyst<<endl;
   if(_addSyst && !_is2D && _hMC) {
     if(_comSyst) {
       computeSystematics(_isProf,true);
@@ -706,7 +706,7 @@ DisplayClass::drawDistribution() {
       mcUnc->SetMarkerSize(0); 
       mcUnc->SetMarkerStyle(1);
       mcUnc->SetMarkerColor(1);
-      mcUnc->SetFillStyle(3001);
+      mcUnc->SetFillStyle(3013);
       mcUnc->SetFillColor(kGray+1);
 
       TGraphAsymmErrors* tmpUnc=(TGraphAsymmErrors*)mcUnc->Clone();
@@ -743,8 +743,7 @@ DisplayClass::drawDistribution() {
   //and finally signals if some exists ===========
   for(size_t is=0;is<sigs.size();is++){
     if(is%2!=0){_hClones[ sigs[is] ]->SetLineStyle(2);}
-    //_hClones[ sigs[is] ]->DrawCopy( opt.c_str() );
-    _hClones[ sigs[is] ]->DrawCopy( "same points" );
+    _hClones[ sigs[is] ]->DrawCopy( opt.c_str() );
   }
   //===============================================
 
@@ -1144,8 +1143,8 @@ DisplayClass::prepareHistograms(const hObs* theobs) {
       htmp->Reset("icem");
       int nb=htmp->GetNbinsX();
       for(int ib=0;ib<nb+2;ib++) {
-	for(int ic=0;ic<=ib;ic++)
-	  htmp->AddBinContent(ic, _hClones[ih]->GetBinContent(ib) );
+	    for(int ic=0;ic<=ib;ic++)
+            htmp->AddBinContent(ic, _hClones[ih]->GetBinContent(ib) );
       }
       _hClones[ih] = (TH1*)htmp->Clone();
     
@@ -1173,7 +1172,7 @@ DisplayClass::prepareHistograms(const hObs* theobs) {
   if( _is1D && !_dOnly) {
     if(_hClones.size()!=nsig)
       _hMC = (TH1*)_hClones[nsig]->Clone();
-    _hMC->SetLineWidth(2);
+    _hMC->SetLineWidth(1);
     _hMC->SetLineColor(kBlack);
     _hMC->SetFillStyle(0);
     _hMC->SetName("simulation");
@@ -1228,7 +1227,8 @@ DisplayClass::prepareHistograms(const hObs* theobs) {
 
 
   if(_hMC)
-    _hMC->SetTitle( _xtitle.c_str() );
+    //_hMC->SetTitle( _xtitle.c_str() );
+    _hMC->SetTitle( "" );   //Jan: remove mini axis title floating somewhere in ratio plot
 
   //Y axis ===================================
   
@@ -1399,7 +1399,7 @@ DisplayClass::drawDataMCRatio() {
   //if(_empty!=nullptr) emptyHisto=(TH1*)_empty->Clone();
   emptyHisto->Reset("ICEM");
 
-  TGraphAsymmErrors* ratio = HistoUtils::ratioHistoToGraph( _hData, _hMC, _mcOnly );
+  TGraphAsymmErrors* ratio = HistoUtils::ratioHistoToGraph( _hData, _hMC, _mcOnly, "" );
   ratio->SetName( ("ratio") );
  
   for(int ib=0;ib<emptyHisto->GetNbinsX()+2;ib++)
@@ -1480,11 +1480,13 @@ DisplayClass::drawDataMCRatio() {
     }
   }//addsyst  
 
-  emptyHisto->GetYaxis()->SetRangeUser( 0.4, 1.6);
+  emptyHisto->GetYaxis()->SetRangeUser( 0.1, 1.9);
   emptyHisto->GetXaxis()->SetNdivisions(_Xdiv[0],_Xdiv[1],_Xdiv[2]);
-  emptyHisto->GetYaxis()->SetNdivisions(3,_Ydiv[1],_Ydiv[2]);
+  emptyHisto->GetYaxis()->SetNdivisions(4,_Ydiv[1],_Ydiv[2]);
   emptyHisto->GetXaxis()->SetTitle( (_xtitle+" ").c_str() );
   emptyHisto->GetYaxis()->SetTitle( "Data/MC" );
+  if(_closure) emptyHisto->GetYaxis()->SetTitle( "pred/obs" );
+  if(_nlo_vs_lo) emptyHisto->GetYaxis()->SetTitle( "NLO/LO" );
   emptyHisto->GetXaxis()->SetTitleSize(0.20);
   emptyHisto->GetXaxis()->SetTitleOffset(0.80);
   emptyHisto->GetXaxis()->SetLabelOffset(0.007);
@@ -1498,11 +1500,13 @@ DisplayClass::drawDataMCRatio() {
  
   ratio->SetMarkerStyle(20); 
   ratio->SetMarkerColor(1); 
-  ratio->GetYaxis()->SetRangeUser(  0.4, 1.6);
+  ratio->GetYaxis()->SetRangeUser(  0.1, 1.9);
   ratio->GetXaxis()->SetNdivisions(_Xdiv[0],_Xdiv[1],_Xdiv[2]);
-  ratio->GetYaxis()->SetNdivisions(3,_Ydiv[1],_Ydiv[2]);
+  ratio->GetYaxis()->SetNdivisions(4,_Ydiv[1],_Ydiv[2]);
   ratio->GetXaxis()->SetTitle( (_xtitle+"_").c_str() );
   ratio->GetYaxis()->SetTitle( "Data/MC" );
+  if(_closure) ratio->GetYaxis()->SetTitle( "pred/obs" );
+  if(_nlo_vs_lo) ratio->GetYaxis()->SetTitle( "NLO/LO" );
   ratio->GetXaxis()->SetTitleSize(0.20);
   ratio->GetXaxis()->SetTitleOffset(0.83);
   ratio->GetXaxis()->SetLabelSize(0.165);
@@ -1991,7 +1995,7 @@ DisplayClass::residualData(const hObs* theObs) {
     mcUnc->SetMarkerSize(0); 
     mcUnc->SetMarkerStyle(1);
     mcUnc->SetMarkerColor(1);
-    mcUnc->SetFillStyle(3001);
+    mcUnc->SetFillStyle(3013);
     mcUnc->SetFillColor(kGray+1);
     TGraphAsymmErrors* tmpUnc=(TGraphAsymmErrors*)mcUnc->Clone();
     tmpUnc->SetName("uncertainties");
@@ -2096,7 +2100,7 @@ DisplayClass::prepareStatistics( vector<pair<string,vector<vector<map<string,flo
   mcUncert->SetMarkerSize(0); 
   mcUncert->SetMarkerStyle(1);
   mcUncert->SetMarkerColor(1);
-  mcUncert->SetFillStyle(3001);
+  mcUncert->SetFillStyle(3013);
   mcUncert->SetFillColor(kGray+1);
   
   size_t idat=(_mcOnly)?-1:( vals[0].second.size()-1);
@@ -2222,7 +2226,7 @@ DisplayClass::configureDisplay(string YTitle, double rangeY[2],
 			       bool ShowDMCRatio, bool ShowGrid, bool staking,
 			       bool AddSystematics, bool mcStatSyst,
 			       float MarkerSize, float LineWidth, bool sSignal,
-			       bool mcOnly, bool cmsPrel, bool uncDet ) {
+			       bool mcOnly, bool cmsPrel, bool uncDet, bool closure, bool nlo_vs_lo, bool fixLeg ) {
 
   _ytitle = YTitle;
   _ymin = rangeY[0];
@@ -2264,6 +2268,9 @@ DisplayClass::configureDisplay(string YTitle, double rangeY[2],
   _prel = cmsPrel;
 
   _uncDet = uncDet;
+  _closure = closure;
+  _nlo_vs_lo = nlo_vs_lo;
+  _fixLeg = fixLeg;
 }
 
 
@@ -2361,7 +2368,7 @@ DisplayClass::computeSystematics(bool isProf, bool cumul) {
   //how many uncertainty sources? 
   if(systs.size() + systsUp.size() > 4) _uncDet=false; //protection
   int nUncSrc = _uncDet?(systs.size() + systsUp.size() + _mcSyst):1;
- 
+  
   vector<TGraphAsymmErrors*> unc(nUncSrc,NULL);
   _uncNames.resize(nUncSrc);
  
@@ -2375,7 +2382,7 @@ DisplayClass::computeSystematics(bool isProf, bool cumul) {
     unc[0]->SetFillColor(kGray+1);
     unc[0]->SetLineColor(kGray+1);
     unc[0]->SetLineStyle(3);
-    unc[0]->SetFillStyle(3001);
+    unc[0]->SetFillStyle(3013);
   
   }
 
@@ -2451,7 +2458,8 @@ DisplayClass::computeSystematics(bool isProf, bool cumul) {
       string n =  (*itS).first.substr( 0, (*itS).first.size() -2 );
       float sU = ((*itS).second)->GetBinContent(ib) - _hMC->GetBinContent(ib);
       float sD = (systsDo[ n+"Do" ])->GetBinContent(ib) - _hMC->GetBinContent(ib);
-      
+      // if(ib==1)
+      // 	cout<<n<<"   "<<sU<<"  "<<sD<<" ("<<_hMC->GetBinContent(ib)<<"  "<<((*itS).second)->GetBinContent(ib)<<"  "<<(systsDo[ n+"Do" ])->GetBinContent(ib)<<endl;
       for(size_t iv=nu;iv<(cumul?systU.size():(nu+1));iv++) {
 	
 	if( sU*sD > 0) { //same sign errors
@@ -2698,6 +2706,83 @@ DisplayClass::drawDetailSystematics(bool cumul) {
 
 }
 
+void
+DisplayClass::drawStatVsSystematics(vector<vector<vector<float> > > numbers, string src) {
+
+  softReset();
+  
+  if(numbers[0].size()==0) {
+    cout<<"Error, numbers are empty "<<endl;
+  }
+
+  int tmpNvar=_nvars;
+  _nvars=1;
+ 
+  _pads = preparePads();
+  TGraph* upVars=new TGraph();
+  TGraph* downVars=new TGraph();
+  float ymax=0;
+  for(size_t iu=0;iu<numbers[0].size();iu++) {
+    upVars->SetPoint(iu, numbers[0][iu][0], numbers[0][iu][1] );
+    downVars->SetPoint(iu, numbers[1][iu][0], numbers[1][iu][1] );
+    if(std::max(numbers[0][iu][1], numbers[1][iu][1])> ymax)
+      ymax=max(numbers[0][iu][1], numbers[1][iu][1]);
+  }
+
+  TH1F* emptyHisto=new TH1F("empty","",100,0.05,100);
+  for(int ib=0;ib<emptyHisto->GetNbinsX()+2;ib++)
+    emptyHisto->SetBinContent(ib,-1);
+  
+  emptyHisto->GetYaxis()->SetRangeUser(0,ymax*1.05);
+  emptyHisto->GetXaxis()->SetTitle("statistical uncertainty [%] ");
+  emptyHisto->GetXaxis()->SetTitleSize(0.05);
+  emptyHisto->GetXaxis()->SetTitleOffset(1.2);
+  emptyHisto->GetYaxis()->SetTitle("yield variation [%] ");
+  emptyHisto->GetYaxis()->SetTitleSize(0.05);
+  emptyHisto->GetYaxis()->SetTitleOffset(1.3);
+
+  upVars->SetMarkerStyle(20);
+  downVars->SetMarkerStyle(24);
+  
+  //drawing
+  _c->Draw();
+  _pads[0][0]->Draw();
+  _pads[0][0]->cd();
+  
+  emptyHisto->Draw();
+  upVars->Draw("P");
+  downVars->Draw("P");
+  bool tmpMcOnly=_mcOnly;
+  _mcOnly=true;
+ 
+  TLatex latex;
+  float textSize=0.75*_pads[0][0]->GetTopMargin();
+  latex.SetNDC();
+  latex.SetTextAlign(11); // align left
+  latex.SetTextFont(61);
+  latex.SetTextSize(textSize);
+  latex.DrawLatex(0.6776,0.9526,"CMS");
+  latex.SetTextFont(52);
+  latex.SetTextSize(textSize*0.76);
+  latex.DrawLatex(0.777,0.9526,"Simulation");
+
+  //latex.DrawLatex(0.221,0.883,(src+" variations").c_str() );
+
+  _pads[0][0]->SetLogx(1);
+  _pads[0][0]->SetGridx(1);
+  _pads[0][0]->SetGridy(1);
+
+  TLegend * leg=new TLegend(0.236,0.755,0.495,0.895, ("  "+src+" variations").c_str() );
+  leg->SetFillColor(0);
+  leg->AddEntry(upVars,"+1 #sigma","p");
+  leg->AddEntry(downVars,"-1 #sigma","p");
+  leg->Draw();
+  
+  _nvars = tmpNvar;
+  _mcOnly = tmpMcOnly;
+  
+}
+
 
 void
 DisplayClass::getIntegral(float x1, float x2, float y1, float y2) {
@@ -2716,8 +2801,8 @@ DisplayClass::printInteg(float x1, float x2, float y1, float y2) {
 	  << _hData->IntegralAndError(_hData->GetXaxis()->FindBin(x1), _hData->GetXaxis()->FindBin(x2), (errors.back()) );
       cout<<" +- "<<errors.back()
 	  <<" // MC-> "
-	  <<_hMC->IntegralAndError(_hMC->GetXaxis()->FindBin(x1), _hMC->GetXaxis()->FindBin(x2), (errors[_nhmc+1]) );
-      cout<<" +- "<<errors[_nhmc+1]<<endl;
+	  <<_hMC->IntegralAndError(_hMC->GetXaxis()->FindBin(x1), _hMC->GetXaxis()->FindBin(x2), (errors[_nhmc]) );
+      cout<<" +- "<<errors[_nhmc]<<endl;
     }
     else if(_mcOnly && _hMC) {
       cout<<" Integral : MC -> "<<_hMC->IntegralAndError(_hMC->GetXaxis()->FindBin(x1), _hMC->GetXaxis()->FindBin(x2), errors[_nhmc+1]);
@@ -2830,7 +2915,7 @@ DisplayClass::cmsPrel() {
     
     latex.SetTextFont(52);
     latex.SetTextSize(textSize*0.76);
-    if(!_mcOnly) {
+    if(!_mcOnly && !_closure) {
       if(_prel)
 	latex.DrawLatex(0.80,0.84,"Preliminary");
     }
@@ -2939,28 +3024,96 @@ DisplayClass::adjustLegend(int iobs, bool skipCoords) {
   }
 
   getLegendCoordinate(_hMC,xd,yd,xu,yu,f,iobs);
-  _leg = new TLegend(xd,yd,xu,yu);
+
+  //count legend entries 
+  int nEntries = 0;
+  int countEntries = 0;
+  if(!_mcOnly) nEntries +=1;
+  if(_is1D) nEntries += _nhmc;
+  if(_addSyst && !_is2D) nEntries +=1;
+
+  int diff = 0;
+  if(nEntries%2!=0){diff = 1;}
+
+  int entries1 = 0;
+  int entries2 = 0;
+  if(nEntries<4){entries1=nEntries;}
+  else{
+      entries2=nEntries/2;
+      if(diff==0){
+          entries1=nEntries/2;
+      }
+      else{
+          entries1=nEntries/2+1;
+      }
+  }
+
+  float height = 0.056;
+  float xmarg = 0.25;
+  if(_mcOnly && !_closure){xmarg = 0.22;}
+  if(nEntries > 8){height = 0.04;}
+  if(nEntries < 7){height = 0.07;}
+
+  float xdfix = xmarg;
+  float yufix = 0.90;
+  float ydfix = yufix-(entries1*height);
+  float xufix = xdfix+0.20;
+
+  float xdfix2 = xufix+0.02;
+  float yufix2 = 0.90;
+  float ydfix2 = yufix2-(entries2*height);
+  float xufix2 = xdfix2+0.20;
+
+  if(_fixLeg){_leg = new TLegend(xdfix,ydfix,xufix,yufix);}
+  else _leg = new TLegend(xd,yd,xu,yu);
+  
   _leg->SetName("legend");
   
+  if(_fixLeg) f=1.;
+  if(_fixLeg && nEntries > 8) f=0.9;
+
   _leg->SetTextSize(0.039*f);
   _leg->SetShadowColor(0);
-  _leg->SetLineColor(1);
   _leg->SetFillColor(0);
-	
+  if(_fixLeg){ 
+    _leg->SetLineColor(0);
+    _leg->SetFillStyle(0);
+    _leg->SetBorderSize(0);
+  }
+
+  _leg2 = new TLegend(xdfix2,ydfix2,xufix2,yufix2);
+  _leg2->SetName("legend");
+  
+  _leg2->SetTextSize(0.039*f);
+  _leg2->SetShadowColor(0);
+  _leg2->SetLineColor(0);
+  _leg2->SetFillColor(0);
+  _leg2->SetFillStyle(0);
+  _leg2->SetBorderSize(0);
+  	
   map<string,size_t> sigs;
 
 
   string legOpt="pl";
   if(_normOpts.find("norm")!=_normOpts.end()) legOpt="l";
 	
-  if(!_mcOnly)
-    _leg->AddEntry(_gData,"data", legOpt.c_str() );
+  if(!_mcOnly){
+    if(_closure) _leg->AddEntry(_gData,"predicted", legOpt.c_str() );
+    if(_nlo_vs_lo) _leg->AddEntry(_gData,"NLO", legOpt.c_str() );
+    else _leg->AddEntry(_gData,"data", legOpt.c_str() );
+    countEntries +=1;
+  }
 
   if( _is1D) {
     for(size_t i=0;i<_nhmc;i++) {
       string nh = (string)( _hClones[i]->GetName());
       if( nh.find("sig")==(size_t)-1) {
-        _leg->AddEntry(_hClones[i],_names[_nhmc-i-1].c_str(),"f");
+        if(_fixLeg){
+            if(countEntries < (nEntries+1)/2 || nEntries < 4) _leg->AddEntry(_hClones[i],_names[_nhmc-i-1].c_str(),"f");
+            else _leg2->AddEntry(_hClones[i],_names[_nhmc-i-1].c_str(),"f");
+        }
+        else _leg->AddEntry(_hClones[i],_names[_nhmc-i-1].c_str(),"f");
+        countEntries +=1;
       }
       else {
         string na = _names[_nhmc-i-1];
@@ -2972,12 +3125,21 @@ DisplayClass::adjustLegend(int iobs, bool skipCoords) {
   }
 
   if(_addSyst && !_is2D) {
-    _leg->AddEntry(_mcUncert[0]->Clone(),"uncertainties","f");
+    if(_fixLeg){
+      if(countEntries < (nEntries+1)/2 || nEntries < 4) _leg->AddEntry(_mcUncert[0]->Clone(),"uncertainties","f");
+      else _leg2->AddEntry(_mcUncert[0]->Clone(),"uncertainties","f");
+    }
+    else _leg->AddEntry(_mcUncert[0]->Clone(),"uncertainties","f");
+    countEntries +=1;
   }
 
-  for(map<string,size_t>::const_iterator it=sigs.begin();
-      it!=sigs.end();it++) {
-    _leg->AddEntry(_hClones[it->second],it->first.c_str(),_sSignal?"f":"l");
+  for(map<string,size_t>::const_iterator it=sigs.begin();it!=sigs.end();it++) {
+    if(_fixLeg){
+      if(countEntries < (nEntries+1)/2 || nEntries < 4) _leg->AddEntry(_hClones[it->second],it->first.c_str(),_sSignal?"f":"l");
+      else _leg2->AddEntry(_hClones[it->second],it->first.c_str(),_sSignal?"f":"l");
+    }
+    else _leg->AddEntry(_hClones[it->second],it->first.c_str(),_sSignal?"f":"l");
+    countEntries +=1;
   }
 
 }

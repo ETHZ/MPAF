@@ -45,6 +45,9 @@ private:
     float getTF_DoubleFake(int ic);
     float getTF_TripleFake(int ic);
     bool wzCRSelection();
+    bool wzCRFakeSelection();
+    void fakeCRSelection();
+    void fakeCRFakeSelection();
     bool ZMuMuSelection();
     bool ttbarSelection();
     bool ZElElSelection();
@@ -52,10 +55,13 @@ private:
     bool WlSelection();
     void categorize();
     bool testRegion();
+    void checkSample();
+    bool passGenSelection();
+    bool genMatched(const CandList leptons, vector<int> lepIdx);
     vector<CandList> build3LCombFake(const CandList tightLeps, vector<unsigned int> idxsT,
 		const CandList fakableLeps, vector<unsigned int> idxsL, const CandList fakableLepsPtCorr,
 		vector<unsigned int> idxsLPtCorr, int nHardestLepton, float pt_cut_hardest_legs, 
-        int nHardLeptons, float pt_cut_hard_legs, bool onZ,
+        int nHardLeptons, float pt_cut_hard_legs, bool onZ, float MT, bool exactlyThreeLep,
         vector< vector<int> >& combIdxs, vector<int>& combType ); 
     void setBaselineRegion();
     void setSignalRegion();
@@ -63,24 +69,24 @@ private:
     float getFR(Candidate* cand, int idx);
     void setCut(std::string, float, std::string, float = 0);
     bool hardLeg(CandList leptons, int n_hardestLeg, float cut_hardestLeg, int n_hardLeg, float cut_hardLeg);
-    void fillHistos();
+    bool ptSelection(CandList leptons);
+    void fillHistos(bool);
     void fillValidationHistos(string reg);
     float getMT2();
     void sortSelectedLeps(CandList leps, std::vector<unsigned int> lepsIdx);
     float lowestOssfMll(CandList leps);
     void registerTriggerVars();
-    void readCSCevents();
-    void readEESCevents();
-    void readFilteredEvents(map< std::pair<int,std::pair<int,unsigned long int> > , unsigned int >&, vector<string>);
+    void systUnc();
 
     bool passHLTbit();
     
     bool passNoiseFilters();
-    bool passCSCfilter();
-    bool passEESCfilter(); 
     
+    void theoreticalUncertainties();
+
     void loadScanHistogram();
     bool checkMassBenchmark();
+    float getFastSimXFactor(float dir);
 
     float M_T(float, float, float, float);
     float DeltaPhi(float, float);
@@ -91,15 +97,24 @@ private:
     bool _selectTaus;
     int _onZ; 
     bool _doPlots;
+    bool _doPlotsVerbose;
     bool _doValidationPlots;
     int _closureByFlavor;
+    int _closure;
     bool _exactlyThreeLep;
     bool _runSystematics;
+    bool _useLepMVA;
+    bool _doGenMatch;
+    int _version;
+    int _LHESYS;
+    string _susyProcessName;
     string _BR;
     string _SR;
     string _FR;
     int _fastSim;
     bool _debug;
+    long int _evt;
+    long int _lumi;
 
 
 private:
@@ -108,16 +123,16 @@ private:
   enum {kGlobal=0,
 	
     kOnZSR001, kOnZSR002, kOnZSR003, kOnZSR004, kOnZSR005, kOnZSR006, kOnZSR007, kOnZSR008,
-	kOnZSR009, kOnZSR010, kOnZSR011, kOnZSR012, kOnZSR013, kOnZSR014, kOnZSR015,
+	kOnZSR009, kOnZSR010, kOnZSR011, kOnZSR012, kOnZSR013, kOnZSR014, kOnZSR015, kOnZSR016, kOnZSR017,
 
 	kOffZSR001, kOffZSR002, kOffZSR003, kOffZSR004, kOffZSR005, kOffZSR006, kOffZSR007, kOffZSR008,
-	kOffZSR009, kOffZSR010, kOffZSR011, kOffZSR012, kOffZSR013, kOffZSR014, kOffZSR015,
+	kOffZSR009, kOffZSR010, kOffZSR011, kOffZSR012, kOffZSR013, kOffZSR014, kOffZSR015, kOffZSR016, kOffZSR017,
     
 	kOnZSR001_Fake, kOnZSR002_Fake, kOnZSR003_Fake, kOnZSR004_Fake, kOnZSR005_Fake, kOnZSR006_Fake, kOnZSR007_Fake, kOnZSR008_Fake,
-	kOnZSR009_Fake, kOnZSR010_Fake, kOnZSR011_Fake, kOnZSR012_Fake, kOnZSR013_Fake, kOnZSR014_Fake, kOnZSR015_Fake,
+	kOnZSR009_Fake, kOnZSR010_Fake, kOnZSR011_Fake, kOnZSR012_Fake, kOnZSR013_Fake, kOnZSR014_Fake, kOnZSR015_Fake, kOnZSR016_Fake, kOnZSR017_Fake,
 	
 	kOffZSR001_Fake, kOffZSR002_Fake, kOffZSR003_Fake, kOffZSR004_Fake, kOffZSR005_Fake, kOffZSR006_Fake, kOffZSR007_Fake, kOffZSR008_Fake,
-	kOffZSR009_Fake, kOffZSR010_Fake, kOffZSR011_Fake, kOffZSR012_Fake, kOffZSR013_Fake, kOffZSR014_Fake, kOffZSR015_Fake,
+	kOffZSR009_Fake, kOffZSR010_Fake, kOffZSR011_Fake, kOffZSR012_Fake, kOffZSR013_Fake, kOffZSR014_Fake, kOffZSR015_Fake, kOffZSR016_Fake, kOffZSR017_Fake,
 
     kOnZBaseline, kOffZBaseline,
 
@@ -125,7 +140,10 @@ private:
     
     kGlobal_Fake,
     
-    kWZCR
+    kWZCR, kWZCR_Fake,
+
+    kFakeCR, kFakeCR_Fake
+
     };
 
     enum {kIsSingleFake=0,kIsDoubleFake,kIsTripleFake };
@@ -189,6 +207,7 @@ private:
     float _nTaus;
     float _nJets;
     float _nBJets;
+    float _onZSR;
     float _nleps;
     int _fEls;
     int _fMus;
@@ -231,6 +250,7 @@ private:
     float _zPt;
     int _idxL1;
     int _idxL2;
+    int _idxL3;
  
     float _btagW;
   
@@ -247,6 +267,9 @@ private:
     bool _isMultiLep = false;
     bool _isFake = false;
     int _flavor = -1;
+    bool _fakeSample = false;
+    bool _convSample = false;
+    bool _promptSample = false;
 
     //for fake background
     vector<CandList> _combList;

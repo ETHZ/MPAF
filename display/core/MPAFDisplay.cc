@@ -67,8 +67,8 @@ MPAFDisplay::drawStatistics(string categ, string cname, bool multiScheme, bool v
 
 
 void
-MPAFDisplay::getStatistics(string categ) {
-  _au->printTables(categ);
+MPAFDisplay::getStatistics(string categ, bool latexOnly, bool header) {
+  _au->printTables(categ, latexOnly, header);
 }
 
 
@@ -82,14 +82,13 @@ MPAFDisplay::getDetailSystematics(string categ, string lvl) {
 }
 
 void
-MPAFDisplay::getCategSystematic(string src, string categ, string lvl, bool latex) {
+MPAFDisplay::getCategSystematic(string src, string categ, string lvl, string vetos, bool latex) {
  
   for(size_t id=0;id<_dsNames.size();id++) {
-    _au->getCategSystematics(_dsNames[id],src, lvl, categ, latex);
+    _au->getCategSystematics(_dsNames[id],src, lvl, categ, vetos, latex);
   }
 
 }
-
 
 void 
 MPAFDisplay::setNumbers() {
@@ -121,7 +120,7 @@ MPAFDisplay::readStatFile(string filename, int& icat) {
   
   if(filename=="") return;
  
-  int tmpICat=icat;
+  //int tmpICat=icat;
 
   vector<std::pair<CatId, ValId> > catMap;
   string ndb = filename;
@@ -217,6 +216,7 @@ MPAFDisplay::readStatFile(string filename, int& icat) {
 	if(pos!=string::npos && categ.substr(pos+1, categ.size()-pos-1).find("R")==string::npos) {
 	  ext=categ.substr(pos+1, categ.size()-pos-1);
 	  redCateg=categ.substr(0, categ.size()-ext.size()-1);
+      redCateg=trim(redCateg, "_");
 	}
 	
         yield  = atof( tks[n+1].c_str() );
@@ -251,58 +251,6 @@ MPAFDisplay::readStatFile(string filename, int& icat) {
 
     //Now overwritte when needed and fill the internal DB
     int n=0;
-    //vector<std::pair<CatId, ValId> >::const_iterator it;
-    //vector<std::pair<CatId, ValId> >::const_iterator itEnd=catMap.end();
-    //for(it=catMap.begin();it!=itEnd;++it) {
-
-    //   n++;
-    //   dss=anConf.findDSS( catMap[ic].first.sname );
-    //   for(unsigned int i=0;i<dss.size();i++) {
-    // 	string cr=dss[i]->getSample(catMap[ic].first.sname)->getCR();
-
-    //   if(!it->first.useExt) continue;
-    //
-    //   CatId tmpId;
-    //   tmpId.categ = it->first.redCateg;
-    //   tmpId.cname = it->first.cname;
-    //   tmpId.sname = it->first.sname;
-    //   tmpId.useExt= false;
-    //   tmpId.redCateg = it->first.redCateg;
-    //   tmpId.ext = "";
-    //   tmpId.uncTag = it->first.uncTag;
-    //   tmpId.upVar = it->first.upVar;
-
-    //  
-    //   bool found=false;
-    //   for(size_t ii=0;ii<catMap.size();ii++) {
-    // 	if(catMap[ii].first.categ==tmpId.categ && 
-    // 	   catMap[ii].first.cname==tmpId.cname && 
-    // 	   catMap[ii].first.sname==tmpId.sname && 
-    // 	   catMap[ii].first.useExt==false && 
-    // 	   catMap[ii].first.redCateg==tmpId.redCateg && 
-    // 	   catMap[ii].first.ext=="" && 
-    // 	   catMap[ii].first.uncTag==tmpId.uncTag && 
-    // 	   catMap[ii].first.upVar==tmpId.upVar){
-    // 	  catMap[ii].second = it->second;
-    // 	  found=true;
-    // 	  break;
-    // 	}
-    //   }//end catMap
-    //
-    //   if(!found) {//category missing, need to add it
-    // 	std::pair<CatId, ValId> p(tmpId, it->second);
-    // 	//adding it at the end should work 
-    // 	catMap.push_back(p);
-    //   }
-    // }
-    
-    //   storeStatNums(dss[i], catMap[ic].second.yield, catMap[ic].second.eyield, 
-    // 		    catMap[ic].second.gen, icat,
-    // 		    catMap[ic].first.cname, catMap[ic].first.sname, catMap[ic].first.categ,
-    // 		    catMap[ic].first.uncTag, catMap[ic].first.upVar, catMap[ic].first.ext);
-      
-    // }
-
 
     //now filling
     n=0;
@@ -312,27 +260,28 @@ MPAFDisplay::readStatFile(string filename, int& icat) {
 
       int icat=_au->getCategId( catMap[ic].first.categ );
       for(unsigned int i=0;i<dss.size();i++) {
-	string cr=dss[i]->getSample(catMap[ic].first.sname)->getCR();
-	if(cr=="") {
-	  storeStatNums(dss[i], catMap[ic].second.yield, catMap[ic].second.eyield, 
+        string cr=dss[i]->getSample(catMap[ic].first.sname)->getCR();
+        if(catMap[ic].first.ext.substr(0,1)!="_" && cr.substr(0,1)=="_") cr=cr.substr(1);
+        if(cr=="") {
+	      storeStatNums(dss[i], catMap[ic].second.yield, catMap[ic].second.eyield, 
 			catMap[ic].second.gen, icat,
 			catMap[ic].first.cname, catMap[ic].first.sname, catMap[ic].first.categ,
 			catMap[ic].first.uncTag, catMap[ic].first.upVar, catMap[ic].first.ext);
-	}
-	else if(catMap[ic].first.ext==cr && cr!="") { // continue;
-	  storeStatNums(dss[i], catMap[ic].second.yield, catMap[ic].second.eyield, 
+	    }
+	    else if(catMap[ic].first.ext==cr && cr!="") { // continue;
+	      storeStatNums(dss[i], catMap[ic].second.yield, catMap[ic].second.eyield, 
 			catMap[ic].second.gen, icat,
 			catMap[ic].first.cname, catMap[ic].first.sname, catMap[ic].first.categ,
 			catMap[ic].first.uncTag, catMap[ic].first.upVar, catMap[ic].first.ext);
 	  
-	  int icat2=_au->getCategId( catMap[ic].first.redCateg );
-	  storeStatNums(dss[i], catMap[ic].second.yield, catMap[ic].second.eyield, 
+	      int icat2=_au->getCategId( catMap[ic].first.redCateg );
+	      storeStatNums(dss[i], catMap[ic].second.yield, catMap[ic].second.eyield, 
 			catMap[ic].second.gen, icat2,
 			catMap[ic].first.cname, catMap[ic].first.sname, catMap[ic].first.redCateg,
 			catMap[ic].first.uncTag, catMap[ic].first.upVar, "");	  
-	}
+	    }  
 	
-	n++;
+	    n++;
       }
     }
   }
@@ -383,7 +332,9 @@ MPAFDisplay::storeStatNums(const Dataset* ds, float yield, float eyield, int gen
 
   //nominal category ===================
   //identified category for nominal
-  if( ds->getSample(sname)->getCR()!=ext ) return; 
+  string cr=ds->getSample(sname)->getCR();
+  if(ext!="_" && cr.substr(0,1)=="_") cr=cr.substr(1);
+  if( cr!=ext ) return; 
   if(uncTag=="")
     _au->setEffFromStat(idx,cname,AUtils::kNominal,yield,eyield,gen);
   else 
@@ -488,7 +439,7 @@ MPAFDisplay::doPlot() {
     Obs_.push_back( _hm->getHObs( obs_[io] ) );
     systs_.push_back( _hm->getSystObs( obs_[io] ) );
   }  
-
+  
   if(Obs_.size()!=0) {
     dp.setSystematicsUnc( systs_ );
     dp.plotDistributions( Obs_ );
@@ -519,31 +470,60 @@ MPAFDisplay::setHistograms() {
     Dataset* ds=anConf.getDataset( _ids );
     string tmpDs= _ids;
     vector<string> obss = ds->getObservables();
+    vector<string> samples= ds->getSamples();
+    // cout<<_ids<<"   "<<ds->getName()<<endl;
+    // for(size_t is=0;is<samples.size(); is++) {
+    //   // cout<<samples[is]<<" ==--> "<<ds->getSample(samples[is])->isData()
+    //   // 	  <<"   "<<ds->getSample(samples[is])->isDD()<<endl;
+    // }
 
     for(size_t io=0;io<obss.size();io++) {
       TH1* htmp(0);
-      vector<string> samples= ds->getSamples();
+
       for(size_t is=0;is<samples.size(); is++) {
         float w = ds->getWeight(is);
+	
+	if(ds->getSample(samples[is])->isNorm()) {
+	  w=ds->getSample(samples[is])->getNorm()/(anConf.getLumi()*ds->getHisto( obss[io], samples[is] )->Integral(0,1000000));
+	} 
+	
+	//pseudodata
+	if(_ids=="data" && !ds->getSample(samples[is])->isData()) w*=anConf.getLumi();
+	
+	if(ds->getSample(samples[is])->isDD()) w/=anConf.getLumi();
         
-        if(ds->getSample(samples[is])->isNorm()) {
-          w=ds->getSample(samples[is])->getNorm()/(anConf.getLumi()*ds->getHisto( obss[io], samples[is] )->Integral(0,1000000));
-        } 
-        
-        if(ds->getSample(samples[is])->isDD()) w/=anConf.getLumi();
-        
+	//cout<<ds->getName()<<"   "<<obss[io]<<" ==>  "<<samples[is]<<" :: "<<ds->getHisto( obss[io], samples[is] )->Integral()<<endl;
+	size_t p=obss[io].find("Unc");
         if(is==0) {
           htmp = ds->getHisto( obss[io], samples[is] );
+	  //cout<<htmp<<"  << "<<endl;
+	
+	  if(htmp==nullptr && p!=string::npos) { //for missing uncertainties
+	    string name=obss[io].substr(0,p);
+	    //cout<<" --> "<<name<<endl;
+	    htmp = ds->getHisto( name, samples[is] );
+	    //cout<<htmp<<"   "<<endl;
+	  }
+	  //cout<<" w "<<w<<endl;
           htmp->Scale( w );
+	  //cout<<" ---> "<<htmp->Integral()<<"  "<<w<<endl;
+	  //cout<<" youpiyou "<<endl;
         }
         else {
-          htmp->Add( ds->getHisto( obss[io], samples[is] ), w);
+	  if(ds->getHisto( obss[io], samples[is])==nullptr && p!=string::npos) {
+	    string name=obss[io].substr(0,p);
+	    htmp->Add( ds->getHisto( name, samples[is] ) );
+	  } else {
+	    htmp->Add( ds->getHisto( obss[io], samples[is] ), w);
+	  }
+	    //cout<<" ---> "<<htmp->Integral()<<"  "<<w<<endl;
+	  //cout<<" quo "<<endl;
         }
       } 
 
       _hm->copyHisto( obss[io] , _inds, htmp );
 
-      delete htmp;
+      //delete htmp;
     
     }
   
@@ -736,6 +716,18 @@ MPAFDisplay::drawDetailSyst(bool cumul) {
 }
 
 void
+MPAFDisplay::drawStatVsSystematic(const string& dss, const string& src, 
+				  const string& categ, const string& lvl,
+				  const string& vetos) {
+ 
+  vector<vector<vector<float> > > numbers =
+    _au->retrieveSystematicNumbers(dss,src, lvl, categ, vetos);
+  
+  dp.drawStatVsSystematics(numbers, src);
+}
+
+
+void
 MPAFDisplay::getIntegral(float x1, float x2, float y1, float y2) {
   dp.getIntegral(x1, x2, y1, y2);
 }
@@ -750,7 +742,6 @@ MPAFDisplay::refresh() {
 void
 MPAFDisplay::setObservables(string v1, string v2, string v3,
 			    string v4, string v5, string v6) {
-
   anConf.addUsefulVar(v1);
   if(v2!="") anConf.addUsefulVar(v2);
   if(v3!="") anConf.addUsefulVar(v3);
@@ -1047,9 +1038,10 @@ MPAFDisplay::makeMultiDataCard(string sigName, vector<string> categs,
     map<string,string> tmpLines;
    
     shapeM shapes;
-    bool isValidCard = _au->getDataCardLines(tmpLines, shapes, _dsNames, 
-					     sigName, categs[ic], cname, 0, _nuisPars, 
-					     _nuisParExt, _nuisParScheme,_nuisParVals);
+    //bool isValidCard =
+    _au->getDataCardLines(tmpLines, shapes, _dsNames, 
+			  sigName, categs[ic], cname, 0, _nuisPars, 
+			  _nuisParExt, _nuisParScheme,_nuisParVals);
 
     //if(ic==0) lines=tmpLines;
     for(map<string,string>::const_iterator it=tmpLines.begin();
@@ -1126,6 +1118,29 @@ MPAFDisplay::makeMultiDataCard(string sigName, vector<string> categs,
           // 	<<uncShapes[ic][ uncNames[iu] ][ _dsNames[id] ][1]<<"  "
           // 	<<uncShapes[ic][ uncNames[iu] ][ _dsNames[id] ][2]<<endl;
 
+          //----------------------
+          //special treatment of application regions with 0 yields -> set statistical uncertainty up variation to 0.35
+          if(_dsNames[id]=="fakes" && uncNames[iu].find("fakes")!= std::string::npos && uncNames[iu].find("stat")!= std::string::npos){
+              if(uncShapes[ic][ uncNames[iu] ][ _dsNames[id] ][1]<=0){
+                  uncShapes[ic][ uncNames[iu] ][ _dsNames[id] ][1] = 0.35;}
+              if(uncShapes[ic][ uncNames[iu] ][ _dsNames[id] ][2]<=0){
+                  uncShapes[ic][ uncNames[iu] ][ _dsNames[id] ][2]=0;}
+          }
+ 
+          //prevent negative down variations
+          if(uncShapes[ic][ uncNames[iu] ][ _dsNames[id] ][2]<=0){
+            uncShapes[ic][ uncNames[iu] ][ _dsNames[id] ][2]=0.000001;
+          }
+          
+          if(uncNames[iu].find("stat")!= std::string::npos){
+              //prevent 0 up variation for stat uncertainty if central value is fixed to 0.0001
+              if(uncShapes[ic].begin()->second[ _dsNames[id] ][0]<=0.0001){
+                  uncShapes[ic][ uncNames[iu] ][ _dsNames[id] ][1]=0.0001;
+                  uncShapes[ic][ uncNames[iu] ][ _dsNames[id] ][2]=0.0001;
+              }
+          }
+         
+          //----------------------
           hUp[ _dsNames[id]+"_"+uncNames[iu] ]->SetBinContent(ic+1, uncShapes[ic][ uncNames[iu] ][ _dsNames[id] ][1] );
           hDown[ _dsNames[id]+"_"+uncNames[iu] ]->SetBinContent(ic+1, uncShapes[ic][ uncNames[iu] ][ _dsNames[id] ][2] );
         } else { //no uncertainty, central value
@@ -1224,4 +1239,14 @@ MPAFDisplay::makeMultiDataCard(string sigName, vector<string> categs,
 
 }
 
+
+//____________________________________________________________________________
+std::string MPAFDisplay::trim(std::string s, std::string chr){
+
+    size_t first = s.find_first_not_of(chr);
+    size_t last  = s.find_last_not_of(chr);
+    if(first == std::string::npos) return "";
+    return s.substr(first, (last-first+1));
+
+}
 

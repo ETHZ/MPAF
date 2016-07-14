@@ -40,11 +40,12 @@ public:
   SusyModule(VarClass* vc, DataBaseManager* dbm);
   ~SusyModule();
 
-  bool elHLTEmulSel(int idx, bool withIso, string branch = "LepGood") const;
+  bool elHLTEmulSel(int idx, bool withIso, string branch = "LepGood", bool v1=false) const;
   bool elHLTEmulSelIso(int idx, int mvaWP = kLooseHT, string branch = "LepGood") const;
-  bool elIdSel(const Candidate* c, int idx, int wp, int mvaWp = kTight, bool chCut = true, bool invSIP = false, string branch = "LepGood") const;
+  bool elIdSel(const Candidate* c, int idx, int wp, int mvaWp = kTight, bool chCut = true, bool invSIP = false, bool LepMVA = false, string branch = "LepGood") const;
   bool elMvaSel(int elIdx, int wp, string branch = "LepGood") const;
-  bool muIdSel(const Candidate* c, int idx, int wp, bool chCut = true, bool invSIP = false, string branch = "LepGood") const;
+  bool muIdSel(const Candidate* c, int idx, int wp, bool chCut = true, bool invSIP = false, bool LepMVA = false, string branch = "LepGood") const;
+  bool lepMVAIdSel(int idx, int wp, string branch = "LepGood") const;
   bool multiIsoSel(int idx, int wp, string branch = "LepGood") const;
   bool multiIsoSelCone(int idx, int wp, string branch = "LepGood") const;
   bool multiIsoSelInSitu(int idx, int wp, string branch = "LepGood") const;
@@ -114,7 +115,8 @@ public:
   void applyLepSF(const CandList& cands, float& weight);
   void applySingleLepSF(const Candidate* cand, float& weight);
   float getFastSimLepSF(Candidate* lep1, Candidate* lep2, int nVert);
-
+  float applyLepSfRA7(const CandList& cands);
+  float applyFastSimLepSfRA7(const CandList& cands, int pileup);
   CandList findZCand(const CandList* leps, float window, float MTcut);
   float bTagSF(CandList& jets , vector<pair<string, unsigned int> >& jetIdx ,
                CandList& bJets, vector<pair<string, unsigned int> >& bJetIdx,
@@ -133,7 +135,11 @@ public:
   double LTFastSimTriggerEfficiency(double HT, double l1_Pt, int l1_pdgId, double l2_Pt, int l2_pdgId);
 
   float getVarWeightFastSimLepSF(const Candidate* l1, const Candidate* l2, int dir);
+  float getVarWeightFastSimLepSFRA7(const CandList& cands, int dir);
 
+  float getWeightFastSimHltSFRA7(const CandList& cands, float HT);
+  float getVarWeightFastSimHltSFRA7(const CandList& cands, float HT, int dir);
+  
   float getPuWeight(unsigned int nvtx);
 
   void applyISRWeight(unsigned int process, int var, float& weight);
@@ -161,7 +167,7 @@ public:
   enum {kMiniIso=0,kPtRatio,kPtRel};
   enum {kEBC=0,kEBF,kEE};
   enum {kEl=0,kMu};
-
+  enum {kVeryLooseMu=0, kLooseMu, kMediumMu, kTightMu, kVeryTightMu, kExtraTightMu, kVeryLooseEl, kLooseEl, kMediumEl, kTightEl, kVeryTightEl, kExtraTightEl};
   
 
 private:
@@ -210,7 +216,9 @@ private:
   vector<float> _miniIsoWP;
   vector<float> _ptRelWP;
   vector<float> _sipWP;
+  vector<float> _sipWPLepMVA;
   vector<float> _muIdWP;
+  vector<float> _lepMVAIdWP;
 
   vector<vector<float> > _elMvaIdWP;
   vector<vector<float> > _multiIsoWP;

@@ -334,10 +334,12 @@ Dataset::loadHistos(string path, string dir, string subdir, string filename, str
 
   if(datafile==nullptr) {cout<<"warning, unable to load histograms"<<endl; return;}
 
+  int varFound=0;
   //scan the file to retrieve the histograms
   TIter nextkey(datafile->GetListOfKeys());
   TKey *key;
   while ((key = ((TKey*)nextkey()))) {
+    //if(varFound==2) break;
     TObject* obj = key->ReadObj(); 
     if( obj==nullptr ) continue;
       
@@ -349,23 +351,31 @@ Dataset::loadHistos(string path, string dir, string subdir, string filename, str
     
     bool find=false;
     for(size_t i=0;i<_usefulVars.size();i++) {
+      //if(varName.find("HT")!=string::npos)
+	// cout<<_usefulVars[i]<<"   "<<varName<<"   "<<optCat<<"   "<<varName+optCat
+	//     <<"   --->> "<<endl;
       if(_usefulVars[i]==varName ||
-	 _usefulVars[i]==varName+optCat ||
-	 varName.find(_usefulVars[i]+"Unc")!=string::npos) {
+	 _usefulVars[i]+optCat==varName ||
+	 varName.find(_usefulVars[i]+"Unc")!=string::npos ||
+	 varName.find(_usefulVars[i]+optCat+"Unc")!=string::npos) {
+	//cout<<" -> find "<<endl;
+	//varFound=1;
 	find=true; break;
       }
+      //if(varFound==1) varFound=2;
     }
-
+    //cout<<"find? "<<find<<endl;
     if(_usefulVars.size()!=0 && !find) continue; 
        // find(_usefulVars.begin(), _usefulVars.end(), varName)==_usefulVars.end() &&
        // find(_usefulVars.begin(), _usefulVars.end(), varName+optCat)==_usefulVars.end() &&
        // !findUnc ) continue;
     
-
     if(optCat!="") {
+      if (optCat.substr(0,1)!="_") optCat="_"+optCat;
       size_t op=varName.find(optCat);
       if(op==string::npos) continue;
       else varName.erase(op,optCat.size());
+      //cout<<varName<<"   "<<optCat<<"  "<<endl;
     }
 
     TIter nextkeyD( ((TDirectory*)obj)->GetListOfKeys() );

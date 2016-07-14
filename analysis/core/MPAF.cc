@@ -76,6 +76,9 @@ void MPAF::initialize(){
   _hname="";
   _hwgtname="";
   _summary=false;
+
+  _systVarOnly=false;
+  _systSource="";
 }
 
 
@@ -158,11 +161,13 @@ void MPAF::analyze(){
       if(_skim&&_fullSkim)
 	_datasets[i]->getTree()->GetEntry(_ie);
 
-      // get event weight, PU reweight it if needed 
-      modifyWeight();
-      
-      // do something at every entry	
-      run();
+      if(!_systVarOnly || _systSource=="") {
+	// get event weight, PU reweight it if needed 
+	modifyWeight();
+	
+	// do something at every entry	
+	run();
+      }
 
       //alternate workflows for uncertainty sources
       for(size_t iu=0;iu<_uncSrcs.size();iu++) {
@@ -212,8 +217,42 @@ void MPAF::analyze(){
   internalWriteOutput();
 
   if(_summary)
-    _au->printNumbers();
+    _au->printNumbers(std::cout);
   
+  //summary backup
+  writeSummary();
+  
+}
+
+void
+MPAF::writeSummary() {
+  string dirname_ =  (string)(getenv("MPAF")) + "/workdir/summary/" + _className;
+  FILE* test = fopen( dirname_.c_str(), "r" );
+  if( test == 0 ) {
+    string command_ = "mkdir -p " + dirname_; 
+    assert( system( command_.c_str() ) == 0 );
+  }
+  else
+    fclose( test );
+
+  string ofilename_ = dirname_ + "/" + _cfgName + ".txt";
+  test = fopen( ofilename_.c_str(), "r" );
+  if( test != 0 )	{
+    fclose( test );
+    TDatime datime_;
+    cout << "File " << ofilename_ << " already exists, save it." << endl;
+    string command_ = "mv " + ofilename_ + " " + ofilename_ + "_"; 
+    ostringstream os;
+    os << datime_.Get();
+    command_ += os.str();
+    assert( system( command_.c_str() ) == 0 );
+  }
+  ofstream ofile( ofilename_.c_str(), ios::out | ios::trunc );
+  if(!ofile) {
+    cout << "Error writing stat file " << endl; 
+    return;
+  }
+  _au->printNumbers(ofile);
 }
 
 //____________________________________________________________________________
@@ -266,8 +305,34 @@ void MPAF::loadConfigurationFile(std::string cfg){
     }
     if(it->second.type==Parser::kSummary){
       _summary = atoi(it->second.val.c_str());
-  }
-    
+    }
+    if(it->second.type==Parser::kSyst){
+      _systVarOnly=true;
+      size_t p=it->second.val.find(":");
+      if(p==string::npos) {
+	_systSource = it->second.val;
+	continue;
+      }
+      
+      _systSource = it->second.val.substr(0,p);
+      _systDir = SystUtils::kNone;
+      if(it->second.val.substr(p+1)!="")
+	_systDir=((it->second.val.substr(p+1)=="Up")?SystUtils::kUp:SystUtils::kDown);
+    }
+    if(it->second.type==Parser::kCounter){
+      
+      bool cnt=false;
+      string singlecnt="";
+
+      if(it->second.val=="0" || it->second.val=="1") {
+	cnt= 1-atoi(it->second.val.c_str());
+      } else {
+	singlecnt=it->second.val;
+      }
+   
+      _au->setCounterOption(cnt, singlecnt);
+    }
+
   }
 
   //datasets
@@ -452,24 +517,29 @@ void MPAF::fill(string var, float valx, float weight) {
   const hObs* obs = _hm->getHObs(var);
   
   if(obs->IsGlobal()) {  
+    
     // IF HISTOGRAM IS GLOBAL DO AS USUAL:
     if(!_uncId) { //central value
       if(_curWF!=-100) { //single workflow
+	if(!obs->isRelevant(_wfNames[_curWF])) return;
 	_hm->fill( var+_wfNames[_curWF], _inds, valx, weight );
       }
       else { //multiple workflows
 	for(_itWF=_wfNames.begin(); _itWF!=_wfNames.end(); ++_itWF) {
+	  if(!obs->isRelevant(_itWF->second)) continue;
 	  _hm->fill( var+_itWF->second, _inds, valx, weight );
 	}
       }
       
     }
-    else { //uncertianties
+    else { //uncertainties
       string uvar=(_uDir==SystUtils::kUp)?("Up"):("Do");
       if(_curWF!=-100) { //single workflow
+	if(!obs->isRelevant(_wfNames[_curWF])) return;
 	_hm->fill( var+_wfNames[_curWF], _inds, _unc, valx, weight,uvar);
       } else {
 	for(_itWF=_wfNames.begin(); _itWF!=_wfNames.end(); ++_itWF) {
+	  if(!obs->isRelevant(_itWF->second)) continue;
 	  _hm->fill( var+_itWF->second, _inds, _unc, valx, weight,uvar);
 	}
       }
@@ -503,10 +573,12 @@ void MPAF::fill(string var, float valx, float valy, float weight) {
   if(obs->IsGlobal()) {  
     // IF HISTOGRAM IS GLOBAL DO AS USUAL:
     if(_curWF!=-100) { //single workflow
+      if(!obs->isRelevant(_wfNames[_curWF])) return;
     _hm->fill( var+_wfNames[_curWF], _inds, valx, valy, weight );
     }
     else { //multiple workflows
       for(_itWF=_wfNames.begin(); _itWF!=_wfNames.end(); ++_itWF) {
+	if(!obs->isRelevant(_itWF->second)) continue;
 	_hm->fill( var+_itWF->second, _inds, valx, valy, weight );
       }
     }
@@ -668,8 +740,12 @@ MPAF::setMultiWorkflow(vector<int> wf) {
 // skimming functions ======================================
 void MPAF::initSkimming() {
   
-  string opath = string(getenv ("MPAF"))+"/workdir/skims";
-  FILE* test = fopen( opath.c_str(), "r" );
+  //string opath =string(getenv ("MPAF"))+"/workdir/skims"; //"/scratch/mmarionn/MPAFSkims";
+  string machine=SystemUtils::exec("hostname -d");
+  bool isPsi=(machine.find("psi")!=string::npos);
+  string user=SystemUtils::exec("whoami");
+  string opath = ((isPsi)?("/scratch/"+user):((string)(getenv ("MPAF"))+"/workdir/skims"));
+  FILE* test = fopen( opath.c_str(), "r" ); 
   if( test == 0 ) {
     string command_ = "mkdir -p " + opath; 
     assert( system( command_.c_str() ) == 0 );
@@ -710,6 +786,15 @@ void MPAF::finalizeSkimming() {
     _hnwSkim->Write();
   _oFile->Write();
   _oFile->Close();
+
+  //copy file to T3
+  string machine=SystemUtils::exec("hostname -d");
+  if(machine.find("psi")==string::npos) return;
+  string user=SystemUtils::exec("whoami");
+  string cpCommand="lcg-cp -b -D srmv2 "+(string)(_oFile->GetName())+" srm://t3se01.psi.ch:8443/srm/managerv2?SFN=/pnfs/psi.ch/cms/trivcat/store/user/"+user+"/MPAFskims/"+_className+"/"+_sampleName+".root";
+  system( cpCommand.c_str() );
+
+
 }
 
 // Workflow functions =======================================
@@ -733,10 +818,12 @@ MPAF::addWorkflowHistos() {
     bool prof = obs->htype.find("P")!=string::npos;
     bool is2D = obs->htype.find("2D")!=string::npos;
 
-    if (!obs->IsGlobal()) continue;  // don't declare histo if it's not declared as global
-
+    if(!obs->IsGlobal()) continue;  // don't declare histo if it's not declared as global
+    
     for(_itWF=_wfNames.begin(); _itWF!=_wfNames.end(); ++_itWF) {
       if(_itWF->second=="") continue; //protection for global histo
+      if(!obs->isRelevant(_itWF->second) ) continue; //no need to store all histograms!
+      
       _hm->addVariableFromTemplate( obs->name+_itWF->second, obs->hs[0], prof, is2D, obs->type );
     }
   }  
@@ -747,6 +834,12 @@ MPAF::addWorkflowHistos() {
 
 void
 MPAF::addManualSystSource(string name, int dir) {
+
+  if(_systVarOnly && _systSource!=name) return;
+  if(_systVarOnly && _systDir==SystUtils::kUp && dir==SystUtils::kDown) return;
+  if(_systVarOnly && _systDir==SystUtils::kDown && dir==SystUtils::kUp) return;
+  if(_systVarOnly && dir==SystUtils::kNone) dir=_systDir;
+
   //everything has to be done by hand
   addWSystSource(name, dir, "+", 0); 
 }
@@ -770,6 +863,10 @@ MPAF::addSystSource(string name, int dir, string type, vector<string> modVar,
   _au->addAutoWorkflow( "Unc"+name+"Up");
   _au->addAutoWorkflow( "Unc"+name+"Do");
   _uType[ name ] = wUnc;
+
+  if(_systVarOnly && _systSource!=name) return;
+  if(_systVarOnly && _systDir==SystUtils::kUp && dir==SystUtils::kDown) return;
+  if(_systVarOnly && _systDir==SystUtils::kDown && dir==SystUtils::kUp) return;
 
   //check the direction
   if(dir!=SystUtils::kNone) {
@@ -798,6 +895,10 @@ MPAF::addSystSource(string name, int dir, string type, vector<string> modVar,
   _au->addAutoWorkflow( "Unc"+name+"Up");
   _au->addAutoWorkflow( "Unc"+name+"Do");
   _uType[ name ] = wUnc;
+
+  if(_systVarOnly && _systSource!=name) return;
+  if(_systVarOnly && _systDir==SystUtils::kUp && dir==SystUtils::kDown) return;
+  if(_systVarOnly && _systDir==SystUtils::kDown && dir==SystUtils::kUp) return;
 
   //check the direction
   if(dir!=SystUtils::kNone) {

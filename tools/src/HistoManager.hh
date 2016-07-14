@@ -99,6 +99,10 @@ public:
   
   void copyHisto( string var, int ds, TH1* h);
 
+  //workflows and histos
+  void setRelevantWFs(string var, vector<string> wfs);
+  void setRelevantUncs(string var, vector<string> uncs);
+
   TH1* getHisto(string obs, int ds);
   const hObs* getHObs(string obs);
   

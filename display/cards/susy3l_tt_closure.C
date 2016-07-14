@@ -7,11 +7,15 @@ void susy3l_tt_closure() {
 
     //general parameters ********************* general parameters
     string dir="SUSY3L";
-    string fileName="ttbar_closure_MuEl_qcd_Powheg_newPU"; //was treeName in LUNE susy_cut_lowpt
-    string fileList="ttbar_closure_MuEl_qcd_Powheg_newPU"; //CH: since AnaConfig needs a fileName to open, we need to put the data files into a different variable
+    string fileName="3l_closure"; //was treeName in LUNE susy_cut_lowpt
+    string fileList="3l_closure"; //CH: since AnaConfig needs a fileName to open, we need to put the data files into a different variable
     string hName="";
 
-    bool mcOnly = false;
+    bool mcOnly = true;
+    bool closure = true;
+    bool nlo_vs_lo = false;
+    bool fixLeg = true;
+    bool scale = true;
   
     //if(md.isInitStatus()) {
     md.anConf.configureNames( dir, fileName, fileList );//, hName );
@@ -21,22 +25,22 @@ void susy3l_tt_closure() {
    
     string sigs = "none"; 
     bool data = false;
-    bool manual = false;
-    string region = "OffZBaseline";
+    bool manual = true;
+    if(!manual){string region = "REGION";}
+    else string region = "OnZBaseline";
 
     if(!manual){string obs = "VARIABLE" ;}    //njets, nbjets, met, ht, lep, zpeak, zpt, mt, pt1, pt2, pt3, mll
-    else{string obs = "njets";}
+    else{string obs = "met";}
  
     //Binning & title ************************* Binning & titre
     string yTitle="number of events";
     //int binning=1;
     int addBinBkg=1; //BinB = binning*AddBin
     double rangeY[2]={0,0};
-    bool logYScale=true;
+    bool logYScale=false;
     //double rangeX[2]={0,7};
     int xDiv[3]={8,6,0};
     int yDiv[3]={6,6,0}; //Nlabel /  sous-Div /ssdiv
-    bool logYScale=false;
     bool overFlowBin=true;
     bool underFlowBin=false;
     bool showDMCRatio=true;
@@ -69,7 +73,7 @@ void susy3l_tt_closure() {
     if(obs == "met"){
         md.dp.setObservables("MET" + region);
         int binning=50;
-        double rangeX[2]={0,500};
+        double rangeX[2]={0,350};
         //bool logYScale=true;
     }
     if(obs == "ht"){
@@ -111,7 +115,7 @@ void susy3l_tt_closure() {
     if(obs == "srs"){
         md.dp.setObservables("SRS" + region);
         int binning=1;
-        double rangeX[2]={1,16};
+        double rangeX[2]={1,18};
         //bool logYScale=true;
     }
     if(obs == "mu_multi"){
@@ -132,6 +136,20 @@ void susy3l_tt_closure() {
         double rangeX[2]={0,6};
         //bool logYScale=true;
     }
+    if(obs == "fake_type"){
+        md.dp.setObservables("fake_type" + region);
+        int binning=1;
+        double rangeX[2]={0,6};
+        //bool logYScale=true;
+    }
+    if(obs == "weights"){
+        md.dp.setObservables("applWeight" + region);
+        int binning=1;
+        double rangeX[2]={-.5,1.5};
+        //bool logYScale=true;
+    }
+
+
 
 
 
@@ -151,16 +169,16 @@ void susy3l_tt_closure() {
     string Norm="";
   
     //Lumis( or XSections ) pb-1 & KFactors ************************************
-    float lumi=3000; //pb-1 19470
+    float lumi=10000; //pb-1 19470
     float energy=13; //TeV
 
     bool useXS=true;
 
-    md.anConf.loadXSDB("XSectionsSpring15.db");
+    md.anConf.loadXSDB("XSectionsSpring16.db");
     
     map<string,float> LumisXS;
     
-    md.anConf.loadKFDB("kFactorsSpring15.db");
+    md.anConf.loadKFDB("kFactorsSpring16.db");
     
     //via XSect
   
@@ -168,107 +186,58 @@ void susy3l_tt_closure() {
     // if( md.isInitStatus() )
     md.anConf.configureLumi( LumisXS, KFactors, lumi, useXS );
 
-    
-    
+    if(scale){
+        float scaleWJets = 154506.056;
+        float scaleDY10 = 30156.34;
+        float scaleDY50 = 15704.55;
+        float scaleTTJets = 2120.02;
+        float scaleTToLeptons_sch = 3.38;
+    }
+    else{
+        float scaleWJets = 1;
+        float scaleDY10 = 1;
+        float scaleDY50 = 1;
+        float scaleTTJets = 1;
+    }
     
     //===============================================================
     // SDYJetsM50_HT600toInf_PU_S14_POSTLS170_skimamples **************************  samples
     //if( md.isInitStatus() ) {
- 
-    //TTV
-//    md.anConf.addSample( "TTWToLNu"                             ,  "ttW"          , kYellow   );
-//    md.anConf.addSample( "TTZToLLNuNu"                          ,  "ttZ"          , kBlue     );
- 
-    //di-boson
-//    md.anConf.addSample( "WZTo3LNu"                             ,  "WZ"              , kGreen    );
-//    md.anConf.addSample( "ZZTo4L"                               ,  "ZZ"              , kGreen+3  );
- 
-    //VVV   
-//    md.anConf.addSample( "WWZ"                                  ,  "VVV"             , kGreen+4   );
-//    md.anConf.addSample( "WZZ"                                  ,  "VVV"             , kGreen+4   );
-//    md.anConf.addSample( "ZZZ"                                  ,  "VVV"             , kGreen+4   );
 
-    //rare
-//    md.anConf.addSample( "GGHZZ4L"                              ,  "rare SM"             , kCyan     );
-//    md.anConf.addSample( "TTHnobb"                              ,  "rare SM"             , kCyan      );
-//    md.anConf.addSample( "VHToNonbb"                            ,  "rare SM"             , kCyan      );
-
-//    md.anConf.addSample( "WGToLNuG"                             ,  "rare SM"             , kCyan      );
-//    md.anConf.addSample( "WpWpJJ"                               ,  "rare SM"             , kCyan      );
-//    md.anConf.addSample( "WWDouble"                             ,  "rare SM"             , kCyan      );
-//    md.anConf.addSample( "WWTo2L2Nu"                            ,  "rare SM"             , kCyan      );
-    //md.anConf.addSample( "ZGTo2LG"                              ,  "rare SM"             , kCyan      );
-
-    //top production
-//    md.anConf.addSample( "TbarToLeptons_tch"                ,  "single t"    , kRed+3      );
-//    md.anConf.addSample( "TBar_tWch"                        ,  "single t"    , kRed+3      );
-//    md.anConf.addSample( "T_tWch"                           ,  "single t"    , kRed+3      );
- //   md.anConf.addSample( "TToLeptons_sch_amcatnlo"          ,  "single t"    , kRed+3      );
-//    md.anConf.addSample( "TToLeptons_tch"                   ,  "single t"    , kRed+3      );
-//    md.anConf.addSample( "TGJets"                           ,  "single t"    , kRed+3      );
-    //md.anConf.addSample( "tZqll"                            ,  "single t"    , kRed+3      );
-//    md.anConf.addSample( "TTJets"                           ,  "TT"    , kRed+2      );
-//    md.anConf.addSample( "TTGJets"                          ,  "TT"    , kRed+2      );
-//    md.anConf.addSample( "TTLLJets_m1to10"                  ,  "TT"    , kRed+2      );
-//    md.anConf.addSample( "TTTT"                             ,  "TT"    , kRed+2      );
-    md.anConf.addSample( "TT_pow"                             ,  "TT"    , kRed-6      );
-    md.anConf.addSample( "_Fake:TT_pow"                        ,  "predicted sig"    , kBlack      );
-//    md.anConf.addSample( "TTJets_DiLepton"                      ,  "TT"    , kRed-6      );
-//    md.anConf.addSample( "Fake:TTJets_DiLepton"                 ,  "predicted sig"    , kBlack      );
-
-
+    //single top
+//    md.anConf.addSample( "TbarToLeptons_tch"                    ,  "single top"    , kCyan      );
+    md.anConf.addSample( "TBar_tWch"                            ,  "single top"    , kCyan      );
+    md.anConf.addSample( "T_tWch"                               ,  "single top"    , kCyan      );
+//    md.anConf.addSample( "TToLeptons_sch_amcatnlo"              ,  "single top"    , kCyan      );
+    md.anConf.addSample( "TToLeptons_sch"                       ,  "single top"    , kCyan, scaleTToLeptons_sch   );
+  
     //W+Jets
-//    md.anConf.addSample( "WJetsToLNu"            ,  "WJets"    , kRed-6      );
+    //md.anConf.addSample( "WJetsToLNu"                           ,  "W+jets"    , kBlue, scaleWJets      );
+
+    //ttbar
+    md.anConf.addSample( "TTJets"                             ,  "t#bar{t}"    , kBlue-10, scaleTTJets      );
 
     //Drell-Yan
-//    md.anConf.addSample( "DYJetsToLL_M10to50"          ,  "DY"    , kRed     );
-//    md.anConf.addSample( "DYJetsToLL_M50"              ,  "DY"    , kRed     );
+    md.anConf.addSample( "DYJetsToLL_M10to50"                   ,  "DY"    , kBlue-7, scaleDY10     );
+    md.anConf.addSample( "DYJetsToLL_M50"                       ,  "DY"    , kBlue-7, scaleDY50     );
 
 
-    //signal
-    //if(sigs=="t"){
-    //md.anConf.addSample( "T1tttt_mGo1200_mChi800"                       ,  "T1t412 sig"     , kBlue-3 );
-    //md.anConf.addSample( "T1tttt_mGo1500_mChi100"                       ,  "T1t415 sig"     , kBlue-7  );
-    //md.anConf.addSample( "T5ttttDeg_mGo1000_mStop300_mCh285_mChi280"    ,  "T5t410 sig"     , kOrange+10  );
-    //}
-    if(sigs=="q"){
-    md.anConf.addSample( "T5qqqqWZDeg_mGo1000_mCh315_mChi300_dilep"     ,  "T5q4WZ315 sig"  , kGreen+2  );
-    md.anConf.addSample( "T5qqqqWZDeg_mGo1000_mCh325_mChi300_dilep"     ,  "T5q4WZ325 sig"  , kMagenta  );
-    md.anConf.addSample( "T5qqqqWZ_mGo1200_mCh1000_mChi800_dilep"       ,  "T5q4WZ12 sig"   , kRed-6  );
-    md.anConf.addSample( "T5qqqqWZ_mGo1500_mCh800_mChi100_dilep"        ,  "T5q4WZ15 sig"   , kRed+3  );
-    md.anConf.addSample( "T5qqqqZZDeg_mGo1000_mCh315_mChi300_dilep"     ,  "T5q4ZZ315 sig"  , kGreen+3  );
-    md.anConf.addSample( "T5qqqqZZDeg_mGo1000_mCh325_mChi300_dilep"     ,  "T5q4ZZ325 sig"  , kMagenta+2  );
-    md.anConf.addSample( "T5qqqqZZ_mGo1200_mCh1000_mChi800_dilep"       ,  "T5q4ZZ12 sig"   , kRed-9  );
-    md.anConf.addSample( "T5qqqqZZ_mGo1500_mCh800_mChi100_dilep"        ,  "T5q4ZZ15 sig"   , kRed+1  );
-    }
-    
-    //data
-    if(data){
-    md.anConf.addSample( "DoubleEG_Run2015D_v3_runs_256630_257599"              , "data"          , kBlack    );
-    md.anConf.addSample( "DoubleEG_Run2015D_v3_runs_257600_258158"              , "data"          , kBlack    );
-    md.anConf.addSample( "DoubleEG_Run2015D_v4_runs_258159_258714_excl"         , "data"          , kBlack    );
-    md.anConf.addSample( "DoubleEG_Run2015D_v4_runs_258211_258750"              , "data"          , kBlack    );
-    md.anConf.addSample( "DoubleMuon_Run2015D_v3_runs_256630_257599"            , "data"          , kBlack    );
-    md.anConf.addSample( "DoubleMuon_Run2015D_v3_runs_257600_258158"            , "data"          , kBlack    );
-    md.anConf.addSample( "DoubleMuon_Run2015D_v4_runs_258159_258714_excl"       , "data"          , kBlack    );
-    md.anConf.addSample( "DoubleMuon_Run2015D_v4_runs_258211_258750"            , "data"          , kBlack    );
-    md.anConf.addSample( "MuonEG_Run2015D_v3_runs_256630_257599"                , "data"          , kBlack    );
-    md.anConf.addSample( "MuonEG_Run2015D_v3_runs_257600_258158"                , "data"          , kBlack    );
-    md.anConf.addSample( "MuonEG_Run2015D_v4_runs_258159_258714_excl"           , "data"          , kBlack    );
-    md.anConf.addSample( "MuonEG_Run2015D_v4_runs_258211_258750"                , "data"          , kBlack    );
-    md.anConf.addSample( "SingleElectron_Run2015D_v3_runs_256630_257599"        , "data"          , kBlack    );
-    md.anConf.addSample( "SingleElectron_Run2015D_v3_runs_257600_258158"        , "data"          , kBlack    );
-    md.anConf.addSample( "SingleElectron_Run2015D_v4_runs_258159_258714_excl"   , "data"          , kBlack    );
-    md.anConf.addSample( "SingleElectron_Run2015D_v4_runs_258211_258750"        , "data"          , kBlack    );
-    md.anConf.addSample( "SingleMuon_Run2015D_v3_runs_256630_257599"            , "data"          , kBlack    );
-    md.anConf.addSample( "SingleMuon_Run2015D_v3_runs_257600_258158"            , "data"          , kBlack    );
-    md.anConf.addSample( "SingleMuon_Run2015D_v4_runs_258159_258714_excl"       , "data"          , kBlack    );
-    md.anConf.addSample( "SingleMuon_Run2015D_v4_runs_258211_258750"            , "data"          , kBlack    );
-    }
+//    md.anConf.addSample( "TTJets_DiLepton"                      ,  "TT"    , kRed-6      );
+    //md.anConf.addSample( "_Fake:TTJets_DiLepton"                 ,  "pseudodata"    , kBlack      );
 
 
-//    md.anConf.addSample( "T5ttttDeg_mGo1000_mStop300_mCh285_mChi280_skim"  ,  "T5tttt (1000) * 20 sig" , kOrange-3 );
-  //md.anConf.addSample( "T5ttttDeg_mGo1300_mStop300_mCh285_mChi280_skim"  ,  "T5tttt (1300) #cdot 20 sig" , kOrange+6 );
+//    md.anConf.addSample( "_Fake:TbarToLeptons_tch"               ,  "pseudodata"    , kBlack      );
+    md.anConf.addSample( "_Fake:TBar_tWch"                       ,  "pseudodata"    , kBlack      );
+    md.anConf.addSample( "_Fake:T_tWch"                          ,  "pseudodata"    , kBlack      );
+//    md.anConf.addSample( "_Fake:TToLeptons_sch_amcatnlo"         ,  "pseudodata"    , kBlack      );
+    md.anConf.addSample( "_Fake:TToLeptons_sch"                  ,  "pseudodata"    , kBlack , scaleTToLeptons_sch  );
+
+    //md.anConf.addSample( "_Fake:WJetsToLNu"                      ,  "pseudodata"    , kBlack, scaleWJets     );
+
+    md.anConf.addSample( "_Fake:DYJetsToLL_M10to50"              ,  "pseudodata"    , kBlack, scaleDY10      );
+    md.anConf.addSample( "_Fake:DYJetsToLL_M50"                  ,  "pseudodata"    , kBlack, scaleDY50      );
+
+    md.anConf.addSample( "_Fake:TTJets"                          ,  "pseudodata"    , kBlack, scaleTTJets    );
     // }
     //===============================================================
 
@@ -290,11 +259,12 @@ void susy3l_tt_closure() {
 			 underFlowBin, showDMCRatio, showGrid, 
 			 stacking, addSystematics, mcStatSyst,
 			 markerSize, lineWidth,summedSignal,
-             mcOnly,cmsPrel, uncDet);
+             mcOnly,cmsPrel, uncDet, closure, nlo_vs_lo, fixLeg);
     md.prepareDisplay();
     md.doPlot();
     //md.doStatisticsPlot();
     md.savePlot("SUSY3L");
+    //md.getStatistics("global_OffZBaseline");
     // md.dp.addText(xt,yt,st,addText);
     if(!manual) gROOT->ProcessLine(".q");
  

@@ -64,6 +64,8 @@ public:
   string getCR() const {return _sId.cr;};
   bool isDD() const {return _sId.dd;};
 
+  bool isData() const {return _sId.isData;};
+
 private:
 
   void computeWeight();

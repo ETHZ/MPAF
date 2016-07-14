@@ -2,6 +2,8 @@
 */*.[a,o,pdf,png,pyc,root,so,swo,swp]
 */*/*.[a,o,pdf,png,pyc,root,so,swo,swp]
 */*/*/*.[a,o,pdf,png,pyc,root,so,swo,swp]
+*/*/*/*/*.[a,o,pdf,png,pyc,root,so,swo,swp]
+*/*/*/*/*/*.[a,o,pdf,png,pyc,root,so,swo,swp]
 */*/*_dict_*
 analysis/bin/analysis
 analysis/lib
@@ -13,3 +15,12 @@ workdir/*
 !workdir/database/
 *dictgen.mk
 *gen.mk
+display/cards/tmpFilesShape/
+scripts/script_scan/step8/scans/*
+scripts/script_scan/step11/PlotsSMS/scans/*
+scripts/script_scan/step10/xcheckPlots/*.[png,eps,pdf]
+sync_files
+scripts/script_scan/step11/PlotsSMS/python/*.pyc
+scripts/script_scan/step10/xcheckPlots
+scripts/script_scan/step11/PlotsSMS/*.root
+scripts/script_scan/step11/PlotsSMS/*.pdf

@@ -42,14 +42,12 @@ struct categ{
 struct EffST{
 
   float eff;
-
-  //deprecated
-  // float systp;
-  // float systm;
-
-  //dev
+  
   map<string,float> systsU;
   map<string,float> systsD;
+
+  // map<string,int> systNameU; 
+  // map<string,int> systNameD; 
 
   float sumw;
   float sumw2;
@@ -60,6 +58,10 @@ struct EffST{
   float NTot;
   
 };
+
+//typedef map<string, unsigned int> effIdxs
+
+//typedef vector<EffST> eIMap
 
 typedef map<string, EffST> eIMap; //efficiencies for one dataset, one categ
 typedef vector<eIMap > eMap; //efficiencies for one categ, all datasets
@@ -109,10 +111,13 @@ private:
   string _uncSrc;
   int _uncDir;
 
+  //counters
+  bool _disableCounter;
+  string _singleCounter;
+
 public:
 
   enum {kGeneral=0, kMono=1, kMulti=2, kMultiVeto=3};
-
 
 public:
   
@@ -125,7 +130,7 @@ public:
   };
 
   template < typename T > inline
-  bool makeCut(T value, T valcut, string type, int ids, string cName, float w, T valUp, T valDo, T seccut=0, int eCateg=AUtils::kGlobal) {
+  bool makeCut(T value, T valcut, const string& type, int ids, const string& cName, float w, T valUp, T valDo, T seccut=0, int eCateg=AUtils::kGlobal) {
 
     bool mean = internalMakeCut<T>( value, valcut, type, ids, cName, w, seccut, eCateg, false);
 
@@ -140,59 +145,63 @@ public:
   };
 
   template < typename T > inline
-  bool makeCut( T value, T valcut, string type, int ids, string cName, float w, T seccut=0, int eCateg=AUtils::kGlobal, bool noRegister=false) {
+  bool makeCut( T value, T valcut, const string& type, int ids, const string& cName, float w, T seccut=0, int eCateg=AUtils::kGlobal, bool noRegister=false) {
     return internalMakeCut<T>(value, valcut,type,ids,cName,w,seccut, eCateg, noRegister);
   };
 
-  bool makeCut( bool decision, int ids, string cName, float w,string type="=", int eCateg=AUtils::kGlobal, bool noRegister=false) {
+  bool makeCut( bool decision, int ids, const string& cName, float w,const string& type="=", int eCateg=AUtils::kGlobal, bool noRegister=false) {
     return internalMakeCut<bool>( decision, true, type, ids, cName, w, 0, eCateg, noRegister );
   };
 
 
   template < typename T > inline
-  bool simpleCut( T value, T cut, string type, T seccut=0 ) {
+  bool simpleCut( T value, T cut, const string& type, T seccut=0 ) {
     return internalMakeCut<T>( value, cut, type, 0, "dummy", 0, seccut, -1, true );
   };
 
 
-  bool simpleCut( bool decision, string type="=") {
+  bool simpleCut( bool decision, const string& type="=") {
     return internalMakeCut<bool>( decision, true, type, 0, "dummy", 0, 0, -1, true );
   };
 
   
-  std::string invCut(string s);
+  const std::string invCut(const string& s);
   bool cbool(bool skip, bool namevar);
 
 
   //Efficiencies and yields
-  void setEfficiency(int ids, string cName, int eCateg, float value, bool acc);
-  void setEffFromStat(int ids, string cName, int eCateg, float sw, float esw, int ngen);
-  void setSystematics( int ids, string cName, int iCateg, string sName, bool up, bool down, float w);
-  void getSystematics(string ds, string lvl, string categ="");
-  void getCategSystematics(string ds, string src, string lvl, string categ="", bool latex=false);
+  void setEfficiency(int ids, const string& cName, int eCateg, float value, bool acc);
+  void setEffFromStat(int ids, const string& cName, int eCateg, float sw, float esw, int ngen);
+  void setSystematics( int ids, const string& cName, int iCateg, const string& sName, bool up, bool down, float w);
+  void getSystematics(const string& ds, const string& lvl, const string& categ="");
+  void getCategSystematics(const string& ds, const string& src, const string& lvl, const string& categ="", const string& vetos="", bool latex=false);
   void getYieldSysts(EffST eST, map<string,float>& rU, map<string,float>& rD,
 		       float& totUp, float& totDown, float& central);
-  float getYield(int ids, string cName, int icat);
+  float getYield(int ids, const string& cName, int icat);
   //workflows
-  void setWFEfficiencies(int ids, string cName, float w, bool acc, string uncName="");
-  void setWFSystematics(int ids, string cName, string sName,
-			bool up, bool down, float w, string uncName="") ;
+  void setWFEfficiencies(int ids, const string& cName, float w, bool acc, const string& uncName="");
+  void setWFSystematics(int ids, const string& cName, const string& sName,
+			bool up, bool down, float w, const string& uncName="") ;
 
-  void saveNumbers(string anName, string conName, std::map<string, int> cnts, std::map<string, double> wgtcnts);
-  void printNumbers();
+  void saveNumbers(const string& anName, const string& conName, std::map<string, int> cnts, std::map<string, double> wgtcnts);
+  void printNumbers(ostream& o);
 
-  void printTables(string categ="global");
+  void printTables(const string& categ="global", bool latexOnly = false, bool header = false);
 
   // =======
 // 	vector<string> listFiles(string dir, string files);
-  int findElement(vector<string> v, string e);
+  int findElement(vector<string> v, const string& e);
   vector< pair<string, vector<vector<map<string,float> > > > > 
-  retrieveNumbers(string categ, string cname, int mcat, string opt="");
+  retrieveNumbers(const string& categ, const string& cname, int mcat, const string& opt="");
   
+  vector<vector<vector<float> > > 
+  retrieveSystematicNumbers(const string& dss, const string& src, const string& lvl,
+			    const string& categ, const string& vetos);
+
   bool getDataCardLines(map<string,string>& lines, 
 			shapeM& shapes, 
 			vector<string> dsNames,
-			string sigName,	string categ, string cname, int bin,
+			const string& sigName,	const string& categ, const string& cname, int bin,
 			map<string,vector<string> > intNuisPars,
 			map<string,bool > nuisParExt,
 			map<string,string> nuisParScheme,
@@ -205,39 +214,43 @@ public:
 
   void setDDCuts(vector<string> ddCuts);
 
+  void setCounterOption(bool disableCounter, string singleCounter);
+
   void reset();
 
   void init();
 
   static hObs cloneHObs(const hObs* o1);
 
-  void addDataset(string dsName); 
-  void addCategory(int iCateg, string nCateg); 
-  void addCategory(int iCateg, string nCateg, string uncTag);
-  void addWorkflow(int iCateg, string nCateg); 
-  void addAutoWorkflow(string eCateg);
+  void addDataset(const string& dsName); 
+  void addCategory(int iCateg, const string& nCateg); 
+  void addCategory(int iCateg, const string& nCateg, const string& uncTag);
+  void addWorkflow(int iCateg, const string& nCateg); 
+  void addAutoWorkflow(const string& eCateg);
   void setCurrentWorkflow(int wf);
   void setMultiWorkflow(vector<int> wfs);
   //int getUncWorkflow(string wf);
 
-  int getCategId(string categ);
-  int getCategUniqueId(string categ, string uncTag);
+  int getCategId(const string& categ);
+  int getCategUniqueId(const string& categ, const string& uncTag);
   int getNCateg() {return _categories.size(); };
   vector<string> getCategories();
   vector<string> getSelections(int ids, int icat);
   bool isUncCateg(int catId);
 
+  static vector<string> parse(const string& str, const string& d);
+
 private:
 
   template < typename T > inline
-  bool internalMakeCut( T value, T valcut, string type, int ids, string cName, float w, T seccut=0, int eCateg=AUtils::kGlobal, bool noRegister=false) {
+  bool internalMakeCut( T value, T valcut, const string& type, int ids, const string& cName, float w, T seccut=0, int eCateg=AUtils::kGlobal, bool noRegister=false) {
 
     bool accept;
 
     if(!cbool(_skipCut, _nm1Var.find(cName)!=_nm1Var.end() ) )
       { return true; }
-    if( !cbool( _invCut, _nm1Var.find(cName)!=_nm1Var.end() ) ) {
-      type = invCut(type); }
+    // if( !cbool( _invCut, _nm1Var.find(cName)!=_nm1Var.end() ) ) {
+    //   type = invCut(type); }
    
     if(type=="<") {
       accept = (value < valcut);
@@ -288,8 +301,9 @@ private:
     
     ids+=1;//0 booked for MC
     
-    //cout<<_uncSrc<<endl;
-
+    if(_disableCounter || (_singleCounter.size()!=0 && _singleCounter!=cName) ) 
+      return accept;
+    
     if(!noRegister || _dsNames[ids].find("GHO")!=(size_t)-1 ) {
       if(_uncSrc=="") {
     	if(eCateg!=_kGlobal) { //eff categories
@@ -335,12 +349,12 @@ private:
   };
 
 
-  void setNumbers(int ids,string cName, int eCateg,float w, bool acc);
-  void setNumFromStat(int ids,string cName, int iCateg, float sw, float esw, int ngen);
+  void setNumbers(int ids,const string& cName, int eCateg,float w, bool acc);
+  void setNumFromStat(int ids,const string& cName, int iCateg, float sw, float esw, int ngen);
 
   vector<string> prepareDSNames(bool wMC, vector<int>& idxs);
   
-  void internalAddCategory(int iCateg, string nCateg, string unctag, bool isWF); 
+  void internalAddCategory(int iCateg, const string& nCateg, const string& unctag, bool isWF); 
 
 
   ClassDef(AnaUtils,0)

@@ -7,6 +7,7 @@ FILES += KineUtils
 FILES += ObjectStore
 FILES += Parser
 #FILES += SystUtils
+FILES += SystemUtils
 FILES += Tools
 FILES += Verbose
 FILES += mt2_bisect

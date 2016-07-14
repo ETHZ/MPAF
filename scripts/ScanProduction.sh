@@ -42,7 +42,7 @@ fi
 if [[ ! -e mass$SIGNAME.txt ]]; then
     root -b -l <<EOF
 .L getMassBenchmarks.C+
-getMassBenchmarks("$SIGNALSAMPLELIST","mass$SIGNAME.txt")
+#getMassBenchmarks("$SIGNALSAMPLELIST","mass$SIGNAME.txt")
 .q
 EOF
 fi

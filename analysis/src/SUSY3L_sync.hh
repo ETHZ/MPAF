@@ -45,6 +45,9 @@ private:
     float getTF_DoubleFake(int ic);
     float getTF_TripleFake(int ic);
     bool wzCRSelection();
+    bool wzCRFakeSelection();
+    void fakeCRSelection();
+    void fakeCRFakeSelection();
     bool ZMuMuSelection();
     bool ttbarSelection();
     bool ZElElSelection();
@@ -52,10 +55,13 @@ private:
     bool WlSelection();
     void categorize();
     bool testRegion();
+    void checkSample();
+    bool passGenSelection();
+    bool genMatched(const CandList leptons, vector<int> lepIdx);
     vector<CandList> build3LCombFake(const CandList tightLeps, vector<unsigned int> idxsT,
 		const CandList fakableLeps, vector<unsigned int> idxsL, const CandList fakableLepsPtCorr,
 		vector<unsigned int> idxsLPtCorr, int nHardestLepton, float pt_cut_hardest_legs, 
-        int nHardLeptons, float pt_cut_hard_legs, bool onZ,
+        int nHardLeptons, float pt_cut_hard_legs, bool onZ, float MT, bool exactlyThreeLep,
         vector< vector<int> >& combIdxs, vector<int>& combType ); 
     void setBaselineRegion();
     void setSignalRegion();
@@ -63,7 +69,8 @@ private:
     float getFR(Candidate* cand, int idx);
     void setCut(std::string, float, std::string, float = 0);
     bool hardLeg(CandList leptons, int n_hardestLeg, float cut_hardestLeg, int n_hardLeg, float cut_hardLeg);
-    void fillHistos();
+    bool ptSelection(CandList leptons);
+    void fillHistos(bool);
     void fillValidationHistos(string reg);
     float getMT2();
     void sortSelectedLeps(CandList leps, std::vector<unsigned int> lepsIdx);
@@ -81,6 +88,7 @@ private:
     
     void loadScanHistogram();
     bool checkMassBenchmark();
+    float getFastSimXFactor(float dir);
 
     float M_T(float, float, float, float);
     float DeltaPhi(float, float);
@@ -91,17 +99,34 @@ private:
     bool _selectTaus;
     int _onZ; 
     bool _doPlots;
+    bool _doPlotsVerbose;
     bool _doValidationPlots;
     int _closureByFlavor;
+    int _closure;
     bool _exactlyThreeLep;
     bool _runSystematics;
+    bool _useLepMVA;
+    bool _doGenMatch;
+    bool _v80X;
+    int _LHESYS;
+    string _susyProcessName;
     string _BR;
     string _SR;
     string _FR;
     int _fastSim;
     bool _debug;
+    long int _run;
     long int _evt;
     long int _lumi;
+    long int _run2;
+    long int _evt2;
+    long int _lumi2;
+    long int _run3;
+    long int _evt3;
+    long int _lumi3;
+
+
+
 
 private:
 
@@ -126,7 +151,10 @@ private:
     
     kGlobal_Fake,
     
-    kWZCR
+    kWZCR, kWZCR_Fake,
+
+    kFakeCR, kFakeCR_Fake
+
     };
 
     enum {kIsSingleFake=0,kIsDoubleFake,kIsTripleFake };
@@ -232,6 +260,7 @@ private:
     float _zPt;
     int _idxL1;
     int _idxL2;
+    int _idxL3;
  
     float _btagW;
   
@@ -248,6 +277,9 @@ private:
     bool _isMultiLep = false;
     bool _isFake = false;
     int _flavor = -1;
+    bool _fakeSample = false;
+    bool _convSample = false;
+    bool _promptSample = false;
 
     //for fake background
     vector<CandList> _combList;
@@ -262,6 +294,11 @@ private:
   	TH3D* _hScanWeight;
   	int _nProcEvtScan;
 
+    float _genWeight;
+    float _puWeight;
+    float _btagWeight;
+    float _sfWeight;
+    float _sumTF;
 };
 
 #endif
