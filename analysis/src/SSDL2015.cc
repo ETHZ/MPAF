@@ -66,7 +66,7 @@ SSDL2015::initialize(){
   _vc->registerVar("LepGood_charge"               );
   _vc->registerVar("LepGood_tightCharge"          );
   _vc->registerVar("LepGood_mediumMuonId"         );
-  _vc->registerVar("LepGood_mediumMuonId2016"     );
+  _vc->registerVar("LepGood_mediumMuonID2016"     );
   _vc->registerVar("LepGood_mvaIdSpring15"        );
   _vc->registerVar("LepGood_pdgId"                );
   _vc->registerVar("LepGood_relIso03"             );
@@ -396,7 +396,7 @@ SSDL2015::initialize(){
 
 
   //=== signal Xsection, easier to normalize from here.
-  _dbm->loadDb("T1ttttXsect", "SignalXsect.db");
+  _dbm->loadDb("T1ttttXsect", "GluinoGluinoXsect.db");
  
   int ilhe = _LHESYS;
   bool tmp_ismux = ilhe >= 1001 && ilhe <= 1009;
@@ -1095,8 +1095,8 @@ SSDL2015::wzCRSelection() {
 
 
   //Scale factors =======================
-  _susyMod->applySingleLepSF(_l1Cand, _weight);
-  _susyMod->applySingleLepSF(_l2Cand, _weight);
+  // _susyMod->applySingleLepSF(_l1Cand, _weight);
+  // _susyMod->applySingleLepSF(_l2Cand, _weight);
   // ====================================
 
   fillhistos();//fill histos for kWZCR

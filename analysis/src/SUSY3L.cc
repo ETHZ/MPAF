@@ -2777,7 +2777,7 @@ bool SUSY3L::checkMassBenchmark(){
         float yb = _hScanWeight->GetYaxis()->FindBin(m2);
         float zb = _hScanWeight->GetZaxis()->FindBin(0.);
   
-        _nProcEvtScan=_hScanWeight->GetBinContent(xb,yb,zb);
+        _nProcEvtScan=_hScanWeight2D->GetBinContent(xb,yb);
     }
  
     if(_ie==0 && (_susyProcessName == "T6ttWW" || _susyProcessName == "T5qqqqVV" || _susyProcessName == "T5ttttdeg")) {
@@ -2811,6 +2811,7 @@ void SUSY3L::loadScanHistogram(){
         string mpafenv=string(getenv ("MPAF"))+"/workdir/database/histoScan"+_susyProcessName+"_2016.root";
         TFile* file=new TFile(mpafenv.c_str(),"read");
         _hScanWeight=(TH3D*)file->Get("CountSMS");
+	_hScanWeight2D=(TH2D*)file->Get("CountSMS2D");
     }
 }
 

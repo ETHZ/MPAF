@@ -55,7 +55,7 @@ ZZZ
 
 PFXS=( "" ) # "_OS2l" "_fakes" )
 
-cfgFile=skimsusy3l.cfg
+cfgFile=skimSSDL2016.cfg #skimsusy3l.cfg
 
 rm cfg/tmpFiles/*
 rm workdir/logs/logskim*
@@ -72,7 +72,7 @@ for ds in ${SAMPLES[@]}; do
 	sed -i 's|SAMPLE|'$ds'|' cfg/tmpFiles/skim_${ds}${pfx}.cfg
 	sed -i 's|ERA|'$era'|' cfg/tmpFiles/skim_${ds}${pfx}.cfg
 	
-	#qsub -q long.q -N MPAFjob -o $MPAF/workdir/logs/logskim_${ds}${pfx}.out -e $MPAF/workdir/logs/logskim_${ds}${pfx}.err $MPAF/scripts/submit.sh $MPAF/cfg/tmpFiles/skim_${ds}${pfx}.cfg
+	qsub -q long.q -N MPAFjob -o $MPAF/workdir/logs/logskim_${ds}${pfx}.out -e $MPAF/workdir/logs/logskim_${ds}${pfx}.err $MPAF/scripts/submit.sh $MPAF $MPAF/cfg/tmpFiles/skim_${ds}${pfx}.cfg
 
     done
 done

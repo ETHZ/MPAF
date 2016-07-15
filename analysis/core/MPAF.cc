@@ -794,6 +794,8 @@ void MPAF::finalizeSkimming() {
   string cpCommand="lcg-cp -b -D srmv2 "+(string)(_oFile->GetName())+" srm://t3se01.psi.ch:8443/srm/managerv2?SFN=/pnfs/psi.ch/cms/trivcat/store/user/"+user+"/MPAFskims/"+_className+"/"+_sampleName+".root";
   system( cpCommand.c_str() );
 
+  //removal of file
+  system( ("rm "+(string)(_oFile->GetName())).c_str() );
 
 }
 

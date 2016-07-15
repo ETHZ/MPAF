@@ -282,6 +282,7 @@ private:
 
   	//scan
   	TH3D* _hScanWeight;
+        TH2D* _hScanWeight2D;
   	int _nProcEvtScan;
 
 };
