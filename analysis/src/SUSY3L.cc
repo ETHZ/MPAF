@@ -2769,15 +2769,16 @@ bool SUSY3L::checkMassBenchmark(){
       unsigned int p=_sampleName.find("_",8);
         unsigned int p1=_sampleName.find("_",p+1);
 	unsigned int p1b=_sampleName.find("_",p1+1);
-        unsigned int p2=_sampleName.find("_",p1+1);
+        unsigned int p2=_sampleName.find("_",p1b+1);
 	//cout<<_sampleName<<"   "<<p<<"  "<<p1<<"  "<<p2<<"   "<<_sampleName.substr(p+1,p1-p-1)<<"  "<<_sampleName.substr(p1+1,p2-p1-1)<<endl;
         float m1=stof( _sampleName.substr(p+1,p1-p-1) );
-        float m2=stof( _sampleName.substr(p1b+1,p2-p1-1) );
+        float m2=stof( _sampleName.substr(p1b+1,p2-p1b-1) );
         float xb = _hScanWeight->GetXaxis()->FindBin(m1);
         float yb = _hScanWeight->GetYaxis()->FindBin(m2);
         float zb = _hScanWeight->GetZaxis()->FindBin(0.);
-  
-        _nProcEvtScan=_hScanWeight2D->GetBinContent(xb,yb);
+	//cout<<m1<<"  "<<m2<<"  "<<_hScanWeight2D->GetBinContent(xb,yb)<<endl;
+        //_nProcEvtScan=_hScanWeight2D->GetBinContent(xb,yb);
+	_nProcEvtScan=_hScanWeight->GetBinContent(xb,yb,zb);
     }
  
     if(_ie==0 && (_susyProcessName == "T6ttWW" || _susyProcessName == "T5qqqqVV" || _susyProcessName == "T5ttttdeg")) {
@@ -2796,7 +2797,7 @@ bool SUSY3L::checkMassBenchmark(){
     if(_sampleName.find(s)==string::npos) return false;
  
     float XS = _dbm->getDBValue(_susyProcessName+"Xsect",M1);
-
+    //cout<<XS<<"  "<<_nProcEvtScan<<endl;
     _weight *= XS/_nProcEvtScan;
     
     return true;
